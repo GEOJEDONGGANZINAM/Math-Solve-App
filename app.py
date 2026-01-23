@@ -4,12 +4,11 @@ from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import sympy as sp
 import re
 import traceback
 
 # ==========================================
-# 1. 디자인 & 스타일 (Masterpiece CSS - 최종_진짜_최종.ver)
+# 1. 디자인 & 스타일 (최종 확정 CSS)
 # ==========================================
 st.set_page_config(layout="wide", page_title="2호기: 수학의 정점")
 
@@ -47,7 +46,7 @@ st.markdown("""
         border-right: 1px solid #e5e7eb;
     }
     
-    /* 사이드바 안의 기본 글씨는 흰색 */
+    /* 사이드바 기본 글씨는 흰색 */
     section[data-testid="stSidebar"] * {
         color: #ffffff !important;
     }
@@ -58,7 +57,7 @@ st.markdown("""
         border-bottom: 1px solid #e5e7eb !important;
     }
 
-    /* 입력 UI 커스텀 */
+    /* 입력 UI 커스텀 (흰색 배경) */
     input[type="text"], input[type="password"], div[data-baseweb="input"] > div {
         background-color: #ffffff !important;
         color: #000000 !important;
@@ -94,17 +93,16 @@ st.markdown("""
         color: #00C4B4 !important;
     }
     
-    /* [수정 1] 앱 초기화 버튼: 볼드체 제거(400) + 검은색 유지 */
+    /* [앱 초기화 버튼] 볼드체 제거(Normal) + 글씨 검은색 강제 적용 */
     section[data-testid="stSidebar"] .stButton button p {
         color: #000000 !important;
         font-weight: 400 !important; /* 굵기: Normal */
     }
-    /* 혹시 p 태그가 아닌 경우 대비 */
     section[data-testid="stSidebar"] .stButton button {
         color: #000000 !important;
     }
 
-    /* [수정 2] 분석 중(스피너) 문구 검은색 강제 적용 */
+    /* [로딩 스피너] 글씨 검은색 */
     div[data-testid="stSpinner"] * {
         color: #000000 !important;
     }
@@ -120,7 +118,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. 핵심 로직 & 함수
+# 2. 핵심 로직
 # ==========================================
 
 # 상태 초기화
@@ -129,75 +127,24 @@ if 'step_index' not in st.session_state:
 if 'analysis_result' not in st.session_state:
     st.session_state.analysis_result = None
 
-# API 키 설정 (Secrets 사용)
+# API 키 설정 (Secrets)
 try:
     api_key = st.secrets["GOOGLE_API_KEY"]
     genai.configure(api_key=api_key)
-except FileNotFoundError:
-    st.sidebar.error("⚠️ secrets.toml 파일을 찾을 수 없습니다.")
-except KeyError:
-    st.sidebar.error("⚠️ GOOGLE_API_KEY가 설정되지 않았습니다.")
-
-# 인터랙티브 수학 연구소 (Sympy)
-def interactive_math_lab():
-    st.markdown("---")
-    st.markdown("### 🧪 인터랙티브 수학 연구소 (Interactive Lab)")
-    
-    if 'math_expr' not in st.session_state:
-        st.session_state.math_expr = "x**2 - 4*x + 3"
-
-    col_input, col_btn = st.columns([4, 1])
-    with col_btn:
-        if st.button("🎲 랜덤 예제"):
-            import random
-            examples = ["x**2 - 2*x - 3", "sin(x) + cos(x)", "(x + 1) / (x - 2)", "a * x**2 + b"]
-            st.session_state.math_expr = random.choice(examples)
-            st.rerun()
-
-    with col_input:
-        expr_input = st.text_input("함수식 입력 f(x) =", value=st.session_state.math_expr)
-
-    try:
-        x = sp.symbols('x')
-        expr = sp.sympify(expr_input)
-        free_symbols = sorted(list(expr.free_symbols), key=lambda s: s.name)
-        params = {s: 1.0 for s in free_symbols if s.name != 'x'}
-        
-        if params:
-            cols = st.columns(len(params))
-            for i, (sym, val) in enumerate(params.items()):
-                with cols[i]:
-                    params[sym] = st.slider(f"${sym.name}$", -10.0, 10.0, 1.0, 0.1)
-        
-        final_expr = expr.subs(params)
-        f_func = sp.lambdify(x, final_expr, "numpy")
-        
-        c_left, c_right = st.columns([1, 1.5])
-        with c_left:
-            st.latex(f"f(x) = {sp.latex(final_expr)}")
-            st.write(f"도함수: $f'(x) = {sp.latex(sp.diff(final_expr, x))}$")
-        with c_right:
-            fig, ax = plt.subplots(figsize=(6, 3))
-            x_vals = np.linspace(-10, 10, 400)
-            y_vals = f_func(x_vals)
-            y_vals[y_vals > 20] = np.nan
-            y_vals[y_vals < -20] = np.nan
-            ax.plot(x_vals, y_vals, color='#00C4B4')
-            ax.grid(True, linestyle='--', alpha=0.5)
-            st.pyplot(fig)
-    except Exception:
-        pass
+except Exception:
+    st.sidebar.error("⚠️ API 키 설정이 필요합니다.")
 
 # ==========================================
 # 3. 사이드바 UI
 # ==========================================
 with st.sidebar:
-    st.title("최승규 2호기")
-    st.write("수학 문제 해결의 새로운 기준")
+    st.title("Math AI 2호기")
+    st.write("수학 문제 해결의 정점")
     st.markdown("---")
     uploaded_file = st.file_uploader("문제 사진 업로드", type=["jpg", "png", "jpeg"])
     
     st.markdown("---")
+    # 초기화 버튼 (CSS로 검은색/보통굵기 적용됨)
     if st.button("🔄 앱 초기화 (Reset)"):
         st.session_state.step_index = 1
         st.session_state.analysis_result = None
@@ -210,10 +157,9 @@ with st.sidebar:
 # [상태 1] 파일 없음
 if not uploaded_file:
     st.info("👈 왼쪽 사이드바에서 문제 사진을 업로드해주세요.")
-    st.markdown("#### ✨ 2호기 업데이트 내역")
-    st.markdown("- **디자인:** 민트 & 화이트 톤의 고급스러운 UI")
-    st.markdown("- **가독성:** 수식 자동 띄어쓰기 및 단계별 박스 UI 적용")
-    st.markdown("- **시각화:** 그래프 사이즈 최적화 (중앙 정렬)")
+    st.markdown("#### ✨ System Ready")
+    st.markdown("- **Optimization:** Completed")
+    st.markdown("- **UI/UX:** Finalized")
     st.stop()
 
 # [상태 2] 파일 있음 & 분석 전
@@ -227,10 +173,8 @@ if uploaded_file and st.session_state.analysis_result is None:
         if st.button("🚀 3가지 관점으로 완벽 분석 시작", type="primary"):
             with st.spinner("🕵️ 1타 강사의 시선으로 분석 중입니다..."):
                 try:
-                    # [수정] 모델 이름을 고정하지 않고, 현재 사용 가능한 최신 모델(Flash/Pro)을 자동으로 찾습니다.
+                    # 모델 자동 탐색 (Flash -> Pro 순서)
                     available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-                    
-                    # 1순위: Flash (빠름), 2순위: Pro (똑똑함), 3순위: 아무거나
                     model_name = next((m for m in available_models if 'flash' in m), 
                                       next((m for m in available_models if 'pro' in m), available_models[0]))
                     
@@ -285,29 +229,26 @@ if uploaded_file and st.session_state.analysis_result is None:
                     st.error(f"분석 중 오류가 발생했습니다: {e}")
                     st.write(traceback.format_exc())
 
-# [상태 3] 분석 결과 표시 (좌측: 풀이 / 우측: 그래프)
+# [상태 3] 분석 결과 표시 (좌: 풀이 / 우: 그래프)
 if st.session_state.analysis_result:
     full_text = st.session_state.analysis_result
     
     try:
-        # 1. 데이터 파싱 (본문과 코드 분리)
+        # 1. 데이터 파싱
         parts = full_text.split("#CODE#")
         text_full = parts[0]
         code_part = parts[1] if len(parts) > 1 else ""
         
-        # 2. 풀이 방법 추출
         methods = {}
         pattern = r"#METHOD_(\d)#(.*?)(?=#METHOD_|\Z)"
         matches = re.findall(pattern, text_full, re.DOTALL)
         for m_id, content in matches:
             methods[int(m_id)] = content.strip()
             
-        # 3. 파이썬 코드 추출
         code_match = re.search(r"```python(.*?)```", code_part, re.DOTALL)
         final_code = code_match.group(1).strip() if code_match else code_part.strip()
         
-        # 4. 화면 분할 (여기가 핵심!)
-        # [1.2 (텍스트) : 1 (그래프)] 비율로 나누어 왼쪽/오른쪽 배치
+        # 4. 화면 분할 (1.2 : 1 비율)
         col_left, col_right = st.columns([1.2, 1])
         
         # === [왼쪽 패널: 풀이 설명] ===
@@ -323,42 +264,34 @@ if st.session_state.analysis_result:
             method_id = int(selected_method_name.split(":")[0].replace("Method ", ""))
             st.markdown("---")
             
-# [수정] 화살표 텍스트 & 형광펜(검은 배경) 제거 코드
-if method_id in methods:
+            if method_id in methods:
                 steps_raw = methods[method_id].split("---")
                 steps = [s.strip() for s in steps_raw if s.strip()]
                 
                 for i, step_text in enumerate(steps):
                     lines = step_text.split('\n')
                     
-                    # 1. [제목 수술] 화살표, STEP 글자, 대괄호 싹 다 제거
+                    # [Clean-up] 제목 처리: 화살표, 대괄호, 영문 등 강제 삭제
                     raw_title = lines[0].strip()
-                    
-                    # (1) 대괄호 [...] 안에 있는 내용 통째로 삭제 (예: [1단계]) -> STEP 번호랑 겹치니까 삭제
-                    import re
+                    # (1) 대괄호 [...] 내용 삭제
                     raw_title = re.sub(r'\[.*?\]', '', raw_title)
-                    
-                    # (2) arrow_down, 밑줄, 영문 step 등 지저분한 것들 강제 삭제
+                    # (2) 지저분한 문자열 삭제 리스트
                     trash_list = ['arrow_down', 'Arrow_down', ':arrow_down:', '_', 'STEP', 'step']
                     for trash in trash_list:
                         raw_title = raw_title.replace(trash, '')
                     
-                    # 남은 제목 깔끔하게 정리
                     title = raw_title.strip()
-                    title = title.replace('$', ' $ ') 
+                    title = title.replace('$', ' $ ') # 수식 띄어쓰기
                     
-                    # 2. [본문 수술] 형광펜(백틱 `) -> 수식($)으로 변환하여 검은 박스 제거
+                    # [Clean-up] 본문 처리: 백틱(`) -> 수식($) 변환 (검은 배경 삭제)
                     body_lines = lines[1:]
                     body_text = '\n'.join(body_lines).strip()
-                    
-                    # ★ 핵심: 백틱(`)을 달러($)로 교체 -> 검은 배경 사라짐
                     body_text = body_text.replace('`', '$')
-                    body_text = body_text.replace('$', ' $ ') # 수식 앞뒤 띄어쓰기
-
-                    # 3. 화면 출력
+                    body_text = body_text.replace('$', ' $ ')
+                    
+                    # Expander UI
                     with st.expander(f"STEP {i+1}: {title}", expanded=True):
                         st.markdown(body_text)
-                        
                         if st.button(f"📊 그래프 보기 (Step {i+1})", key=f"btn_{method_id}_{i}"):
                             st.session_state.step_index = i + 1
             else:
@@ -366,29 +299,22 @@ if method_id in methods:
 
         # === [오른쪽 패널: 그래프 시각화] ===
         with col_right:
-            # 상단 여백을 살짝 줘서 텍스트와 높이를 맞춤
             st.markdown(f"### 📐 시각화 (M{method_id}-S{st.session_state.step_index})")
-            
             try:
-                # 그래프 코드 실행
                 exec_globals = {"np": np, "plt": plt, "patches": patches}
                 exec(final_code, exec_globals)
                 
                 if "draw" in exec_globals:
                     fig = exec_globals["draw"](method_id, st.session_state.step_index)
                     
-                    # [그래프 사이즈 및 위치 조정]
-                    # 오른쪽 패널 안에서도 중앙에 예쁘게 뜨도록 여백(Columns) 사용
-                    # [1:5:1] 비율로 설정하여 너무 크지 않고 적당하게 중앙 정렬
-                    _, c_graph, _ = st.columns([0.5, 3, 0.5]) 
+                    # 그래프 사이즈 중앙 정렬 (1:3:1 -> 약 60% 크기)
+                    _, c_graph, _ = st.columns([0.5, 3, 0.5])
                     with c_graph:
                         st.pyplot(fig)
                 else:
                     st.error("그래프 함수를 찾을 수 없습니다.")
             except Exception as e:
-                # 그래프 생성 전이거나 오류 시 조용히 대기
                 st.info("그래프를 생성하려면 왼쪽에서 단계를 선택하세요.")
 
     except Exception as e:
-        st.error("결과 처리 중 오류가 발생했습니다.")
-        st.write(e)
+        st.error("결과 처리 중 오류가 발생했습니다
