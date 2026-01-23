@@ -192,7 +192,7 @@ def interactive_math_lab():
 # 3. 사이드바 UI
 # ==========================================
 with st.sidebar:
-    st.title("Math AI 2호기")
+    st.title("최승규 2호기")
     st.write("수학 문제 해결의 새로운 기준")
     st.markdown("---")
     uploaded_file = st.file_uploader("문제 사진 업로드", type=["jpg", "png", "jpeg"])
@@ -323,6 +323,7 @@ if st.session_state.analysis_result:
             method_id = int(selected_method_name.split(":")[0].replace("Method ", ""))
             st.markdown("---")
             
+# [수정] 화살표 텍스트 & 형광펜(검은 배경) 제거 코드
             if method_id in methods:
                 steps_raw = methods[method_id].split("---")
                 steps = [s.strip() for s in steps_raw if s.strip()]
@@ -330,19 +331,28 @@ if st.session_state.analysis_result:
                 for i, step_text in enumerate(steps):
                     lines = step_text.split('\n')
                     
-                    # 제목 정리 (불필요한 기호 삭제)
+                    # 1. 제목 처리: arrow_down 글씨 강제 삭제
                     raw_title = lines[0].strip().replace('[', '').replace(']', '')
-                    title = raw_title.replace('arrow_down', '').replace(':arrow_down:', '').replace('_', ' ').strip()
-                    title = title.replace('$', ' $ ')
+                    # 대소문자 변형까지 싹 다 지워서 깔끔하게 만듦
+                    for trash in ['arrow_down', 'Arrow_down', ':arrow_down:', '_']:
+                        raw_title = raw_title.replace(trash, '')
                     
-                    # 본문 정리 (백틱 제거 및 수식 변환)
-                    body_text = '\n'.join(lines[1:]).strip()
-                    body_text = body_text.replace('`', '$').replace('$', ' $ ')
+                    title = raw_title.strip()
+                    title = title.replace('$', ' $ ') # 수식 띄어쓰기
                     
-                    # Expander(접이식 박스) UI
+                    # 2. 본문 처리: 형광펜(백틱 `)을 수식($)으로 변환
+                    body_lines = lines[1:]
+                    body_text = '\n'.join(body_lines).strip()
+                    
+                    # 여기가 핵심: ` 기호를 $ 로 바꾸면 검은 배경이 사라지고 흰 수식이 됨
+                    body_text = body_text.replace('`', '$')
+                    body_text = body_text.replace('$', ' $ ') # 수식 가독성 확보
+                    
+                    # 3. 화면 출력
                     with st.expander(f"STEP {i+1}: {title}", expanded=True):
                         st.markdown(body_text)
-                        # 그래프 보기 버튼
+                        
+                        # 그래프 버튼
                         if st.button(f"📊 그래프 보기 (Step {i+1})", key=f"btn_{method_id}_{i}"):
                             st.session_state.step_index = i + 1
             else:
