@@ -8,7 +8,7 @@ import re
 import traceback
 
 # ==========================================
-# 1. 디자인 & 스타일 (최종 확정 CSS)
+# 1. 디자인 & 스타일 (절대 안 건드림)
 # ==========================================
 st.set_page_config(layout="wide", page_title="2호기: 수학의 정점")
 
@@ -17,7 +17,6 @@ st.markdown("""
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
     * { font-family: 'Pretendard', sans-serif !important; }
 
-    /* 전체 배경 및 폰트 설정 */
     .stApp { background-color: #ffffff !important; }
     html, body, [class*="css"] {
         font-size: 13px !important; 
@@ -25,7 +24,6 @@ st.markdown("""
         background-color: #ffffff !important;
     }
     
-    /* 제목 스타일 */
     h1, h2, h3, h4 {
         font-size: 16px !important;
         font-weight: 800 !important;
@@ -33,31 +31,26 @@ st.markdown("""
         margin-bottom: 0.5rem !important;
     }
 
-    /* 본문 텍스트 */
     .stMarkdown p, li {
         font-size: 13px !important;
         line-height: 1.7 !important;
         color: #374151 !important;
     }
 
-    /* 사이드바 스타일 (민트색 배경) */
     section[data-testid="stSidebar"] {
         background-color: #00C4B4 !important;
         border-right: 1px solid #e5e7eb;
     }
     
-    /* 사이드바 기본 글씨는 흰색 */
     section[data-testid="stSidebar"] * {
         color: #ffffff !important;
     }
     
-    /* 상단 헤더 */
     header[data-testid="stHeader"] {
         background-color: #ffffff !important;
         border-bottom: 1px solid #e5e7eb !important;
     }
 
-    /* 입력 UI 커스텀 (흰색 배경) */
     input[type="text"], input[type="password"], div[data-baseweb="input"] > div {
         background-color: #ffffff !important;
         color: #000000 !important;
@@ -73,13 +66,11 @@ st.markdown("""
         border: 1px solid #d1d5db !important;
     }
 
-    /* 라디오 버튼 선택 글씨 강조 */
     div[data-testid="stRadio"] label p {
         color: #000000 !important;
         font-weight: 700 !important;
     }
     
-    /* 버튼 스타일 (기본) */
     .stButton > button {
         background-color: white;
         border: 1px solid #d1d5db;
@@ -93,21 +84,18 @@ st.markdown("""
         color: #00C4B4 !important;
     }
     
-    /* [앱 초기화 버튼] 볼드체 제거(Normal) + 글씨 검은색 강제 적용 */
     section[data-testid="stSidebar"] .stButton button p {
         color: #000000 !important;
-        font-weight: 400 !important; /* 굵기: Normal */
+        font-weight: 400 !important;
     }
     section[data-testid="stSidebar"] .stButton button {
         color: #000000 !important;
     }
 
-    /* [로딩 스피너] 글씨 검은색 */
     div[data-testid="stSpinner"] * {
         color: #000000 !important;
     }
 
-    /* Expander 스타일 */
     .streamlit-expanderHeader {
         background-color: #f9fafb !important;
         border-radius: 8px !important;
@@ -120,14 +108,11 @@ st.markdown("""
 # ==========================================
 # 2. 핵심 로직
 # ==========================================
-
-# 상태 초기화
 if 'step_index' not in st.session_state:
     st.session_state.step_index = 1
 if 'analysis_result' not in st.session_state:
     st.session_state.analysis_result = None
 
-# API 키 설정 (Secrets)
 try:
     api_key = st.secrets["GOOGLE_API_KEY"]
     genai.configure(api_key=api_key)
@@ -138,13 +123,12 @@ except Exception:
 # 3. 사이드바 UI
 # ==========================================
 with st.sidebar:
-    st.title("최승규 2호기")
+    st.title("Math AI 2호기")
     st.write("수학 문제 해결의 정점")
     st.markdown("---")
     uploaded_file = st.file_uploader("문제 사진 업로드", type=["jpg", "png", "jpeg"])
     
     st.markdown("---")
-    # 초기화 버튼 (CSS로 검은색/보통굵기 적용됨)
     if st.button("🔄 앱 초기화 (Reset)"):
         st.session_state.step_index = 1
         st.session_state.analysis_result = None
@@ -153,16 +137,10 @@ with st.sidebar:
 # ==========================================
 # 4. 메인 분석 로직
 # ==========================================
-
-# [상태 1] 파일 없음
 if not uploaded_file:
     st.info("👈 왼쪽 사이드바에서 문제 사진을 업로드해주세요.")
-    st.markdown("#### ✨ System Ready")
-    st.markdown("- **Optimization:** Completed")
-    st.markdown("- **UI/UX:** Finalized")
     st.stop()
 
-# [상태 2] 파일 있음 & 분석 전
 if uploaded_file and st.session_state.analysis_result is None:
     image = Image.open(uploaded_file)
     c1, c2 = st.columns([1, 1])
@@ -173,13 +151,13 @@ if uploaded_file and st.session_state.analysis_result is None:
         if st.button("🚀 3가지 관점으로 완벽 분석 시작", type="primary"):
             with st.spinner("🕵️ 1타 강사의 시선으로 분석 중입니다..."):
                 try:
-                    # 모델 자동 탐색 (Flash -> Pro 순서)
                     available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
                     model_name = next((m for m in available_models if 'flash' in m), 
                                       next((m for m in available_models if 'pro' in m), available_models[0]))
                     
                     model = genai.GenerativeModel(model_name)
                     
+                    # 프롬프트: 그래프 aspect ratio 정사각형(6,6)으로 고정 요청
                     prompt = """
                     너는 대한민국 1타 수학 강사야. 이 문제를 **3가지 방식**으로 풀이해.
                     
@@ -196,6 +174,7 @@ if uploaded_file and st.session_state.analysis_result is None:
                     
                     **[시각화 코드 규칙 (엄수)]**
                     - `def draw(method, step):` 작성.
+                    - **figsize=(6, 6)으로 고정할 것.** (정사각형 비율 유지)
                     - **한글 깨짐 방지를 위해 반드시 영어(English)로 텍스트 출력.**
                     - **그래프 제목 폰트 크기: 16, 내부 텍스트: 12.**
                     - 중요 포인트는 빨강/파랑 색상 활용.
@@ -215,7 +194,7 @@ if uploaded_file and st.session_state.analysis_result is None:
                     #CODE#
                     ```python
                     def draw(method, step):
-                        fig, ax = plt.subplots(figsize=(6, 5))
+                        fig, ax = plt.subplots(figsize=(6, 6))
                         ax.set_title(f"Method {method} - Step {step}", fontsize=16)
                         return fig
                     ```
@@ -234,7 +213,6 @@ if st.session_state.analysis_result:
     full_text = st.session_state.analysis_result
     
     try:
-        # 1. 데이터 파싱
         parts = full_text.split("#CODE#")
         text_full = parts[0]
         code_part = parts[1] if len(parts) > 1 else ""
@@ -248,7 +226,7 @@ if st.session_state.analysis_result:
         code_match = re.search(r"```python(.*?)```", code_part, re.DOTALL)
         final_code = code_match.group(1).strip() if code_match else code_part.strip()
         
-        # 4. 화면 분할 (1.2 : 1 비율)
+        # 화면 분할 (1.2 : 1 비율)
         col_left, col_right = st.columns([1.2, 1])
         
         # === [왼쪽 패널: 풀이 설명] ===
@@ -271,21 +249,24 @@ if st.session_state.analysis_result:
                 for i, step_text in enumerate(steps):
                     lines = step_text.split('\n')
                     
-                    # 1. 제목 정리 (arrow_down 같은 글씨 삭제)
+                    # [강력한 청소] 제목 처리: 대괄호, 화살표, STEP 등 잡동사니 강력 삭제
                     raw_title = lines[0].strip()
-                    for trash in ['arrow_down', 'Arrow_down', ':arrow_down:', '_', 'STEP', 'step', '[', ']']:
-                        raw_title = raw_title.replace(trash, '')
-                    title = raw_title.strip().replace('$', ' $ ')
+                    # 1. 대괄호와 그 안의 내용물 ([...]) 정규식으로 삭제
+                    raw_title = re.sub(r'\[.*?\]', '', raw_title)
+                    # 2. 화살표 및 기타 찌꺼기 단어들 대소문자 무시하고 삭제
+                    for trash in ['arrow_down', ':arrow_down:', 'step', '_']:
+                        raw_title = re.sub(r'(?i)' + re.escape(trash), '', raw_title)
                     
-                    # 2. 본문 정리 (★ 여기가 형광펜 없애는 부분입니다 ★)
+                    title = raw_title.strip()
+                    title = title.replace('$', ' $ ') # 수식 띄어쓰기
+                    
+                    # [강력한 청소] 본문 처리: 백틱(`) -> 수식($) 변환 (형광펜 박스 영구 제거)
                     body_lines = lines[1:]
                     body_text = '\n'.join(body_lines).strip()
+                    body_text = body_text.replace('`', '$') # 백틱을 달러로 바꿔서 코드박스 해제
+                    body_text = body_text.replace('$', ' $ ') # 수식 가독성
                     
-                    # 핵심: 백틱(`) 기호를 달러($)로 바꿔서 검은 박스를 없애고 수식으로 만듭니다.
-                    body_text = body_text.replace('`', '$')
-                    body_text = body_text.replace('$', ' $ ')
-                    
-                    # 출력
+                    # Expander UI
                     with st.expander(f"STEP {i+1}: {title}", expanded=True):
                         st.markdown(body_text)
                         if st.button(f"📊 그래프 보기 (Step {i+1})", key=f"btn_{method_id}_{i}"):
@@ -303,8 +284,9 @@ if st.session_state.analysis_result:
                 if "draw" in exec_globals:
                     fig = exec_globals["draw"](method_id, st.session_state.step_index)
                     
-                    # 그래프 사이즈 중앙 정렬 (1:3:1 -> 약 60% 크기)
-                    _, c_graph, _ = st.columns([0.5, 3, 0.5])
+                    # [그래프 사이즈 60% 고정]
+                    # 1(여백) : 3(그래프) : 1(여백) 비율 = 전체 5중의 3 = 딱 60%
+                    _, c_graph, _ = st.columns([1, 3, 1])
                     with c_graph:
                         st.pyplot(fig)
                 else:
