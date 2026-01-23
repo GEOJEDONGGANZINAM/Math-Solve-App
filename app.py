@@ -123,7 +123,7 @@ except Exception:
 # 3. 사이드바 UI
 # ==========================================
 with st.sidebar:
-    st.title("최승규 2호기")
+    st.title("Math AI 2호기")
     st.write("수학 문제 해결의 정점")
     st.markdown("---")
     uploaded_file = st.file_uploader("문제 사진 업로드", type=["jpg", "png", "jpeg"])
@@ -249,26 +249,27 @@ if st.session_state.analysis_result:
                 for i, step_text in enumerate(steps):
                     lines = step_text.split('\n')
                     
-                    # [강력한 청소] 제목 처리: 대괄호, 화살표, STEP 등 잡동사니 강력 삭제
+                    # 1. [제목 수술] 화살표(arrow_down) 글씨를 빈칸으로 치환해서 삭제
                     raw_title = lines[0].strip()
-                    # 1. 대괄호와 그 안의 내용물 ([...]) 정규식으로 삭제
-                    raw_title = re.sub(r'\[.*?\]', '', raw_title)
-                    # 2. 화살표 및 기타 찌꺼기 단어들 대소문자 무시하고 삭제
-                    for trash in ['arrow_down', ':arrow_down:', 'step', '_']:
-                        raw_title = re.sub(r'(?i)' + re.escape(trash), '', raw_title)
+                    # 정규식(re)을 사용해 arrow_down, 대괄호[], 밑줄(_) 등을 깨끗하게 지움
+                    import re
+                    clean_title = re.sub(r'(?i)(arrow_down|:arrow_down:|_|step|\[.*?\])', '', raw_title).strip()
                     
-                    title = raw_title.strip()
-                    title = title.replace('$', ' $ ') # 수식 띄어쓰기
-                    
-                    # [강력한 청소] 본문 처리: 백틱(`) -> 수식($) 변환 (형광펜 박스 영구 제거)
+                    # 2. [본문 수술] 형광펜(백틱) 제거 + 2.png 스타일 수식 적용
                     body_lines = lines[1:]
                     body_text = '\n'.join(body_lines).strip()
-                    body_text = body_text.replace('`', '$') # 백틱을 달러로 바꿔서 코드박스 해제
-                    body_text = body_text.replace('$', ' $ ') # 수식 가독성
                     
-                    # Expander UI
-                    with st.expander(f"STEP {i+1}: {title}", expanded=True):
+                    # ★ 핵심 마법: ` (백틱)을 $ (달러)로 바꿉니다.
+                    # 이러면 '검은 박스'가 사라지고 -> '2.png 같은 예쁜 수식'으로 변합니다.
+                    body_text = body_text.replace('`', '$')
+                    
+                    # [안전장치] 수식 렌더링이 깨지지 않게 $ 기호 앞뒤로 띄어쓰기를 줍니다.
+                    body_text = body_text.replace('$', ' $ ') 
+                    
+                    # 화면 출력
+                    with st.expander(f"STEP {i+1}: {clean_title}", expanded=True):
                         st.markdown(body_text)
+                        
                         if st.button(f"📊 그래프 보기 (Step {i+1})", key=f"btn_{method_id}_{i}"):
                             st.session_state.step_index = i + 1
             else:
@@ -296,5 +297,4 @@ if st.session_state.analysis_result:
 
     except Exception as e:
         st.error("결과 처리 중 오류가 발생했습니다.")
-
         st.write(e)
