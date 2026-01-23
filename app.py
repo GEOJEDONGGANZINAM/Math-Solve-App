@@ -351,7 +351,7 @@ if st.session_state.analysis_result:
         final_code = code_match.group(1).strip() if code_match else code_part.strip()
         
         # 4. 화면 분할 (왼쪽: 설명 / 오른쪽: 그래프)
-        col_left, col_right = st.columns([1. 2, 1])
+        col_left, col_right = st.columns([1.2, 1])
         
         # === [왼쪽: 설명 창] ===
         with col_left:
