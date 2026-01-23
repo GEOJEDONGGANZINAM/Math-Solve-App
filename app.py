@@ -9,7 +9,7 @@ import re
 import traceback
 
 # ==========================================
-# 1. 디자인 & 스타일 (Masterpiece CSS - 앱 초기화 버튼 블랙 버전)
+# 1. 디자인 & 스타일 (Masterpiece CSS - 앱 초기화 버튼 블랙 확정판)
 # ==========================================
 st.set_page_config(layout="wide", page_title="2호기: 수학의 정점")
 
@@ -46,13 +46,12 @@ st.markdown("""
         background-color: #00C4B4 !important;
         border-right: 1px solid #e5e7eb;
     }
+    
+    /* [중요] 사이드바 안의 기본 글씨는 흰색 */
     section[data-testid="stSidebar"] * {
         color: #ffffff !important;
     }
-    section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h3 {
-        color: #ffffff !important;
-    }
-
+    
     /* 상단 헤더 */
     header[data-testid="stHeader"] {
         background-color: #ffffff !important;
@@ -95,10 +94,14 @@ st.markdown("""
         color: #00C4B4 !important;
     }
     
-    /* [수정됨] 사이드바 안의 버튼(앱 초기화)만 강제로 검은색 적용 */
-    section[data-testid="stSidebar"] .stButton > button {
-        color: #000000 !important; /* 리얼 블랙 */
-        font-weight: 600 !important;
+    /* [수정됨] 사이드바 버튼 내부의 p 태그(글씨)를 직접 타격하여 검은색 강제 적용 */
+    section[data-testid="stSidebar"] .stButton button p {
+        color: #000000 !important;
+        font-weight: 700 !important;
+    }
+    /* 혹시 p 태그가 아닌 경우를 대비한 2중 안전장치 */
+    section[data-testid="stSidebar"] .stButton button {
+        color: #000000 !important;
     }
 
     /* Expander(접이식 박스) 스타일 */
