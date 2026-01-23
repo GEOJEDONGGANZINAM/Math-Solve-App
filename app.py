@@ -123,7 +123,7 @@ except Exception:
 # 3. 사이드바 UI
 # ==========================================
 with st.sidebar:
-    st.title("Math AI 2호기")
+    st.title("최승규 2호기")
     st.write("수학 문제 해결의 정점")
     st.markdown("---")
     uploaded_file = st.file_uploader("문제 사진 업로드", type=["jpg", "png", "jpeg"])
@@ -296,4 +296,5 @@ if st.session_state.analysis_result:
 
     except Exception as e:
         st.error("결과 처리 중 오류가 발생했습니다.")
+
         st.write(e)
