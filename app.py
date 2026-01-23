@@ -327,86 +327,87 @@ if uploaded_file and st.session_state.analysis_result is None:
             st.warning("API 키를 입력해주세요.")
     st.stop()
 
-# [화면 3] 결과 뷰어
-if st.session_state.analysis_result:
-    full_text = st.session_state.analysis_result
-    
-    try:
-        parts = full_text.split("#CODE#")
-        text_full = parts[0]
-        code_part = parts[1] if len(parts) > 1 else ""
-        
-        methods = {}
-        pattern = r"#METHOD_(\d)#(.*?)(?=#METHOD_|\Z)" 
-        matches = re.findall(pattern, text_full, re.DOTALL)
-        
-        for m_id, content in matches:
-            methods[int(m_id)] = content.strip()
-
-        code_match = re.search(r"```python(.*?)```", code_part, re.DOTALL)
-        final_code = code_match.group(1).strip() if code_match else code_part.strip()
-        
-        col_left, col_right = st.columns([1.2, 1])
-        
-    with col_left:
-        st.markdown("### 🟦 풀이 방법 선택")
-        selected_method_name = st.radio(
-            "풀이 방법을 선택하세요",
-            ["Method 1: 정석 풀이", "Method 2: 빠른 풀이", "Method 3: 직관 풀이"],
-            label_visibility="collapsed",
-            horizontal=True
-        )
-        
-        # 선택된 번호 추출 (1, 2, 3)
-        method_id = int(selected_method_name.split(":")[0].replace("Method ", ""))
-        st.markdown("---")
-
-        # [수정된 부분] 단계별 설명 출력 (박스 + 폰트 교정)
-        if method_id in methods:
-            steps_raw = methods[method_id].split("---")
-            steps = [s.strip() for s in steps_raw if s.strip()]
+# [결과 화면 표시 섹션 - 완전체 수정본]
+        if st.session_state.analysis_result:
+            full_text = st.session_state.analysis_result
             
-            for i, step_text in enumerate(steps):
-                lines = step_text.split('\n')
-                # 제목 처리
-                raw_title = lines[0].strip().replace('[', '').replace(']', '')
-                # 수식 앞뒤 띄어쓰기 (간단 교정)
-                title = raw_title.replace('$', ' $ ')
+            try:
+                # 1. 코드와 본문 분리
+                parts = full_text.split("#CODE#")
+                text_full = parts[0]
+                code_part = parts[1] if len(parts) > 1 else ""
                 
-                # 본문 처리
-                body_lines = lines[1:]
-                body_text = '\n'.join(body_lines).strip()
-                # 수식 앞뒤 띄어쓰기 (간단 교정)
-                body_text = body_text.replace('$', ' $ ')
+                # 2. 풀이 방법 파싱 (정규표현식)
+                import re
+                methods = {}
+                pattern = r"#METHOD_(\d)#(.*?)(?=#METHOD_|\Z)"
+                matches = re.findall(pattern, text_full, re.DOTALL)
                 
-                # 💡 여기가 핵심: 박스(Expander) 형태로 변경
-                with st.expander(f"STEP {i+1}: {title}", expanded=True):
-                    st.markdown(body_text)
+                for m_id, content in matches:
+                    methods[int(m_id)] = content.strip()
+                
+                # 3. 파이썬 코드 추출
+                code_match = re.search(r"```python(.*?)```", code_part, re.DOTALL)
+                final_code = code_match.group(1).strip() if code_match else code_part.strip()
+                
+                # 4. 화면 분할 (왼쪽: 설명 / 오른쪽: 그래프)
+                col_left, col_right = st.columns([1.2, 1])
+                
+                # === [왼쪽: 설명 창] ===
+                with col_left:
+                    st.markdown("### 🟦 풀이 방법 선택")
+                    selected_method_name = st.radio(
+                        "풀이 방법을 선택하세요",
+                        ["Method 1: 정석 풀이", "Method 2: 빠른 풀이", "Method 3: 직관 풀이"],
+                        label_visibility="collapsed",
+                        horizontal=True
+                    )
                     
-                    # 그래프 확인 버튼을 박스 안으로 이동
-                    if st.button(f"📊 이 단계({i+1}) 그래프 보기", key=f"btn_{method_id}_{i}"):
-                        st.session_state.step_index = i + 1
-        else:
-            st.info("이 풀이 방법은 생성되지 않았습니다.")
-
-        with col_right:
-            with st.container():
-                st.markdown(f"### 📐 실시간 시각화 (Method {method_id} - Step {st.session_state.step_index})")
-                try:
-                    exec_globals = {"np": np, "plt": plt, "patches": patches}
-                    exec(final_code, exec_globals)
-                    if "draw" in exec_globals:
-                        plt.close('all')
-                        plt.style.use('seaborn-v0_8-whitegrid')
+                    method_id = int(selected_method_name.split(":")[0].replace("Method ", ""))
+                    st.markdown("---")
+                    
+                    # 단계별 설명 출력 (박스형 UI)
+                    if method_id in methods:
+                        steps_raw = methods[method_id].split("---")
+                        steps = [s.strip() for s in steps_raw if s.strip()]
                         
-                        fig = exec_globals["draw"](method_id, st.session_state.step_index)
-                        st.pyplot(fig, use_container_width=True)
+                        for i, step_text in enumerate(steps):
+                            lines = step_text.split('\n')
+                            # 제목 처리 (대괄호 제거 및 수식 간격 조정)
+                            raw_title = lines[0].strip().replace('[', '').replace(']', '')
+                            title = raw_title.replace('$', ' $ ')
+                            
+                            # 본문 처리 (수식 간격 조정)
+                            body_lines = lines[1:]
+                            body_text = '\n'.join(body_lines).strip()
+                            body_text = body_text.replace('$', ' $ ')
+                            
+                            # 접이식 박스(Expander) 적용
+                            with st.expander(f"STEP {i+1}: {title}", expanded=True):
+                                st.markdown(body_text)
+                                # 그래프 보기 버튼
+                                if st.button(f"📊 이 단계({i+1}) 그래프 보기", key=f"btn_{method_id}_{i}"):
+                                    st.session_state.step_index = i + 1
                     else:
-                        st.warning("AI가 시각화 함수를 만들지 못했습니다.")
-                except Exception as e:
-                    st.error("그래프 생성 중 오류가 발생했습니다.")
-    except Exception as e:
-        st.error("데이터 처리 중 문제가 발생했습니다.")
-        st.write(traceback.format_exc())
+                        st.info("이 풀이 방법은 생성되지 않았습니다.")
 
+                # === [오른쪽: 그래프 창] ===
+                with col_right:
+                    with st.container():
+                        st.markdown(f"### 📐 실시간 시각화 (Method {method_id} - Step {st.session_state.step_index})")
+                        try:
+                            # 그래프 그리기 실행
+                            exec_globals = {"np": np, "plt": plt, "patches": patches}
+                            exec(final_code, exec_globals)
+                            
+                            if "draw" in exec_globals:
+                                fig = exec_globals["draw"](method_id, st.session_state.step_index)
+                                st.pyplot(fig)
+                            else:
+                                st.error("시각화 함수(draw)를 찾을 수 없습니다.")
+                        except Exception as e:
+                            st.warning(f"아직 그래프가 생성되지 않았거나 오류가 발생했습니다.\n({e})")
+
+            except Exception as e:
+                st.error(f"분석 결과를 처리하는 중 오류가 발생했습니다: {e}")
 
