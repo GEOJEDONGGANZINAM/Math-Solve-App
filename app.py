@@ -10,39 +10,59 @@ import traceback
 # ==========================================
 # 1. 디자인 & 스타일 (심플 순정 모드)
 # ==========================================
-st.set_page_config(layout="wide", page_title="최승규 2호기 - 순정")
+st.set_page_config(layout="wide", page_title="최승규 2호기")
 
 st.markdown("""
 <style>
+    /* 폰트 설정 (유지) */
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
     * { font-family: 'Pretendard', sans-serif !important; }
     
-    .stApp { background-color: #ffffff !important; }
+    /* [핵심 수정] 배경색/글자색 강제 고정 제거 */
+    /* 기존의 .stApp { background-color: #ffffff !important; } 같은 코드를 삭제하여
+       스트림릿이 알아서 다크/라이트 모드를 판단하게 합니다. */
     
-    /* 본문 텍스트 가독성 */
+    /* 본문 텍스트 스타일 */
     .stMarkdown p, .stMarkdown li {
         font-size: 16px !important;
         line-height: 1.8 !important;
-        color: #1a1a1a !important;
+        /* color: #1a1a1a !important;  <-- 삭제: 테마에 따라 자동 적용 */
+        color: inherit !important; /* 부모 요소(배경)의 색상에 맞춰 자동 조절 */
         margin-bottom: 1em !important;
     }
     
     /* 수식 스타일 */
-    .katex { font-size: 1.1em !important; }
+    .katex { font-size: 1.1em !important; color: inherit !important; }
     
     /* 헤더 스타일 */
-    h1, h2, h3 { color: #000000 !important; font-weight: 700 !important; }
+    h1, h2, h3 {
+        /* color: #000000 !important; <-- 삭제 */
+        color: inherit !important; /* 테마에 맞게 자동 조절 */
+        font-weight: 700 !important;
+    }
     
-    /* 버튼 스타일 */
+    /* 버튼 스타일 (테마 반응형으로 수정) */
     .stButton > button {
         border-radius: 8px;
-        border: 1px solid #ddd;
-        background: white;
-        color: black;
+        /* 테두리, 배경, 글자색을 테마 변수로 변경 */
+        border: 1px solid var(--default-textColor) !important;
+        background-color: var(--background-color) !important;
+        color: var(--text-color) !important;
+        transition: all 0.2s ease;
     }
+    /* 버튼 호버 효과 (사이드바 포인트 컬러 활용) */
     .stButton > button:hover {
-        border-color: #00C4B4;
-        color: #00C4B4;
+        border-color: #00C4B4 !important;
+        color: #00C4B4 !important;
+    }
+
+    /* (선택사항) 사이드바는 포인트 컬러라 유지하거나, 원하시면 테마를 따르게 바꿀 수 있습니다. 
+       현재는 기존 포인트 컬러(청록색) 배경에 흰 글씨를 유지합니다. */
+    section[data-testid="stSidebar"] {
+        background-color: #00C4B4 !important;
+    }
+    section[data-testid="stSidebar"] * {
+         color: #ffffff !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -67,7 +87,7 @@ except Exception:
 # ==========================================
 with st.sidebar:
     st.title("최승규 2호기")
-    st.caption("Pure Gemini Mode")
+    st.caption("여러분들 검색할 때마다 내 돈은 감소중")
     st.markdown("---")
     uploaded_file = st.file_uploader("문제 사진 업로드", type=["jpg", "png", "jpeg"])
     
@@ -93,8 +113,8 @@ if st.session_state.analysis_result is None:
     with c1:
         st.image(image, caption="업로드된 문제", use_container_width=True)
     with c2:
-        if st.button("🚀 1타 강사 풀이 시작", type="primary"):
-            with st.spinner("분석 중입니다..."):
+        if st.button("🚀 최승규의 풀이 시작", type="primary"):
+            with st.spinner("열심히 푸는중 조금만 기다려라"):
                 try:
                     model = genai.GenerativeModel('gemini-2.5-flash')
                     
@@ -158,7 +178,7 @@ if st.session_state.analysis_result:
     col_text, col_graph = st.columns([1.2, 1])
     
     with col_text:
-        st.markdown("### 📝 1타 강사 풀이")
+        st.markdown("### 📝 최승규의 풀이")
         st.markdown("---")
         # 제미나이 답변 그대로 출력
         st.markdown(text_content)
