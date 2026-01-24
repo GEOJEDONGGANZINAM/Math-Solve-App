@@ -272,30 +272,32 @@ if st.session_state.analysis_result:
             
             if method_id in methods:
                 # 1. 원본 텍스트 가져오기
-                raw_text = methods[method_id]
+                raw_full_text = methods[method_id]
 
                 # ==========================================================
-                # [필터링 구역 1: 형광펜(백틱) 박멸]
+                # [세탁기 가동] 형님, 여기서 문자열 자체를 조져버립니다.
                 # ==========================================================
-                # 백틱(`)이 하나라도 있으면 무조건 삭제. (이게 형광의 원인입니다)
-                # 코드 블록(```)도 함께 날아갑니다.
-                text_no_highlight = raw_text.replace('```', '').replace('`', '')
-
-                # ==========================================================
-                # [필터링 구역 2: Arrow 박멸]
-                # ==========================================================
-                # 스크린샷에 보인 .arrow_down 처럼 앞에 점이나 특수문자가 붙은 것까지 다 잡습니다.
-                # (?i) : 대소문자 무시
-                # [\.:#_]* : 앞에 붙은 점, 콜론, 샵, 언더바
-                # arrow : 핵심 단어
-                # [a-z0-9_]* : 뒤에 붙는 단어 (_down, _up 등)
-                # [↓→] : 화살표 특수기호
-                arrow_pattern = r'(?i)([\.:#_]*arrow[a-z0-9_]*[\.:#_]*|[↓→])'
                 
-                clean_full_text = re.sub(arrow_pattern, '', text_no_highlight)
+                # 1. [형광펜(백틱) 삭제]
+                # 문장 전체에서 백틱(`) 기호를 아예 없애버립니다. (형광이 생길 수가 없음)
+                cleaned_text = raw_full_text.replace("`", "").replace("```", "")
 
-                # 3. 깨끗해진 텍스트를 단계(---)별로 분리
-                steps_raw = clean_full_text.split("---")
+                # 2. [Arrow 삭제] 정규식 강화
+                # .arrow_down, _arrow, arrow_down, :arrow: 등 모든 변종 패턴 삭제
+                # (?i) : 대소문자 무시
+                # [\.\s#_:-]* : 앞에 붙은 점(.), 공백, 샵, 언더바, 콜론 등 특수문자
+                # arrow : 핵심 단어
+                # [\w_-]* : 뒤에 붙는 글자들 (down, up, style 등)
+                arrow_pattern = r'(?i)([\.\s#_:-]*arrow[\w_-]*[\.\s#_:-]*|[↓→])'
+                cleaned_text = re.sub(arrow_pattern, '', cleaned_text)
+
+                # 3. [잡동사니 삭제] 제목에 들어가는 대괄호 찌꺼기 등
+                cleaned_text = re.sub(r'\[.*?\]', '', cleaned_text)
+
+                # ==========================================================
+
+                # 2. 깨끗해진 텍스트를 단계(---)별로 분리
+                steps_raw = cleaned_text.split("---")
                 steps = [s.strip() for s in steps_raw if s.strip()]
                 
                 for i, step_text in enumerate(steps):
@@ -303,14 +305,19 @@ if st.session_state.analysis_result:
                     
                     # 제목과 본문 분리
                     raw_title = lines[0].strip()
+                    # 제목이 비었거나 이상하면 기본값
+                    if not raw_title or len(raw_title) < 2: 
+                        raw_title = "풀이 과정 및 해석"
+                    
+                    # 본문 합치기
                     body_lines = lines[1:]
                     body_text = '\n'.join(body_lines).strip()
                     
-                    # [제목 2차 청소] step, 단계, #, 대괄호 같은 찌꺼기 제거
-                    clean_title = re.sub(r'(?i)(step\s*\d*|단계|\[.*?\]|#)', '', raw_title).strip()
-                    if not clean_title: clean_title = "풀이 과정"
-
+                    # [최종 확인 사살] 제목/본문에 혹시 남은 찌꺼기 제거
+                    clean_title = raw_title.replace("step", "").replace("Step", "").strip()
+                    
                     # [수식 보정] LaTeX($) 렌더링을 위해 $ 앞뒤에 공백 강제 주입
+                    # (이게 없으면 수식이 텍스트랑 붙어서 깨져 보임)
                     body_text = re.sub(r'(?<!\$)\$(?!\$)', ' $ ', body_text)
                     
                     # UI 출력
