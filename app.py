@@ -8,7 +8,7 @@ import re
 import traceback
 
 # ==========================================
-# 1. 디자인 & 스타일 (1호기의 필살 구출 작전)
+# 1. 디자인 & 스타일 (1호기의 필사적인 구출 작전)
 # ==========================================
 st.set_page_config(layout="wide", page_title="최승규 2호기 - 순정")
 
@@ -18,15 +18,13 @@ st.markdown("""
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
     * { font-family: 'Pretendard', sans-serif !important; }
     
-    /* [기존 유지] 텍스트 스타일 */
+    /* 텍스트 스타일 */
     .stMarkdown p, .stMarkdown li {
         font-size: 16px !important;
         line-height: 1.8 !important;
         color: inherit !important;
         margin-bottom: 1em !important;
     }
-    
-    /* [기존 유지] 제목 스타일 (20px, Bold) */
     h1, h2, h3 {
         font-size: 20px !important; 
         font-weight: 700 !important;
@@ -34,43 +32,38 @@ st.markdown("""
         margin-top: 1.5em !important;
         margin-bottom: 0.5em !important;
     }
-    
-    /* [기존 유지] 기타 스타일 */
     .katex { font-size: 1.1em !important; color: inherit !important; }
-    .stButton > button {
-        border: 1px solid var(--default-textColor) !important;
-        background-color: var(--background-color) !important;
-    }
-    section[data-testid="stSidebar"] {
-        background-color: #00C4B4 !important;
-    }
-    section[data-testid="stSidebar"] * {
-         color: #ffffff !important;
-    }
-    
+    section[data-testid="stSidebar"] { background-color: #00C4B4 !important; }
+    section[data-testid="stSidebar"] * { color: #ffffff !important; }
+
     /* ====================================================================
-       [형님 구출 코드 v3] 스크롤 따라오기 - 'Inner Sticky' 기술
+       [형님 구출 코드 Final] 스크롤 따라오기 - 강제 고정 모드
        ==================================================================== */
     
-    /* 1. 최상위 스크롤 잠금 해제 (필수) */
+    /* 1. 앱 전체의 스크롤 동작을 sticky 친화적으로 변경 */
     [data-testid="stAppViewContainer"] {
         overflow-y: scroll !important;
         overflow-x: hidden !important;
     }
     
-    /* 2. 기둥들이 화면 끝까지 늘어나도록 둠 (Stretch 유지) */
-    /* 이렇게 해야 '트랙'이 길게 형성되어 스크롤 할 공간이 생깁니다 */
-    [data-testid="stHorizontalBlock"] {
-        align-items: stretch !important;
+    /* 2. 메인 블록의 오버플로우 잠금 해제 */
+    [data-testid="stMainBlock"] {
+        overflow: visible !important;
     }
 
-    /* 3. 오른쪽 기둥 자체가 아니라, 그 '내용물(알맹이)'을 고정시킴 */
-    /* 표식(#sticky-target)을 가진 컬럼의 '첫 번째 자식 div'를 타겟팅 */
-    div[data-testid="column"]:has(#sticky-target) > div {
+    /* 3. 컬럼들이 서로 키 맞추기(Stretch) 금지 -> 그래야 빈 공간이 생겨서 따라옴 */
+    [data-testid="stHorizontalBlock"] {
+        align-items: flex-start !important;
+    }
+
+    /* 4. '#sticky-anchor' 표식을 가진 컬럼을 찾아서 화면 상단에 고정 */
+    div[data-testid="column"]:has(#sticky-anchor) {
         position: -webkit-sticky !important;
         position: sticky !important;
-        top: 5rem !important; /* 상단 메뉴바 아래에 착 붙음 */
-        z-index: 999 !important;
+        top: 5rem !important; /* 상단 메뉴바 아래에 고정 */
+        z-index: 1000 !important;
+        height: fit-content !important; /* 내용물 크기만큼만 높이 차지 */
+        display: block !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -115,7 +108,7 @@ if st.session_state.analysis_result is None:
         try:
             model = genai.GenerativeModel('gemini-2.5-flash')
             
-            # [프롬프트] 글씨 겹침 해결 & 비율 고정 명령 강화
+            # [프롬프트] 식 표시 위치(옆에) & 겹침 방지 & 비율 고정
             prompt = """
             너는 대한민국 1타 수학 강사야. 이 문제를 학생에게 설명하듯이 **3가지 방식**으로 친절하고 명확하게 풀이해줘.
 
@@ -135,10 +128,11 @@ if st.session_state.analysis_result is None:
             **[그래프 필수 조건 - 절대 어기지 마]**
             1. **비율 고정**: 코드에 `ax.set_aspect('equal')`을 꼭 넣어서 정사각형 비율 유지.
             2. **크기**: `plt.figure(figsize=(6, 6))`
-            3. **내용**: 문제의 **최종 정답 상태**를 그려.
-            4. **[핵심] 글씨 겹침 방지 (Offset)**: 
-               - 점의 좌표나 길이를 표시할 때 `plt.text(x, y, ...)`를 쓰되, **x, y 좌표에 +0.4 또는 -0.4 정도 오프셋**을 줘서 점이나 선이랑 겹치지 않게 해.
-               - `ha='left'`, `va='bottom'` 등을 상황에 맞게 조절해.
+            3. **[핵심 요청] 식 표시 위치**: 
+               - 그래프의 식(예: $y=x^2$)은 범례(Legend)에 넣지 말고, **그래프 선 바로 옆(근처)에 텍스트로 표시**해줘.
+               - 단, **다른 글자나 선과 겹치지 않게** 좌표를 잘 잡아서 표시해. (Offset 활용)
+            4. **글씨 겹침 방지**: 
+               - 점의 좌표나 길이를 표시할 때도 겹치지 않게 `ha`, `va` 정렬과 좌표 오프셋을 세심하게 조정해.
             5. **글씨 크기**: 모든 텍스트는 `fontsize=9`로 통일.
             6. **영어 사용**: 한글 깨짐 방지를 위해 모든 텍스트는 영어로 작성.
             
@@ -185,10 +179,9 @@ if st.session_state.analysis_result:
         st.markdown(text_content)
         
     with col_graph:
-        # [Sticky Target]
-        st.markdown('<div id="sticky-target"></div>', unsafe_allow_html=True)
+        # [핵심] Sticky Anchor 심기 (CSS가 이 ID를 찾아서 고정함)
+        st.markdown('<div id="sticky-anchor"></div>', unsafe_allow_html=True)
         
-        # 제목
         st.markdown("### 📐 최종 시각화")
         
         if code_content:
@@ -200,9 +193,7 @@ if st.session_state.analysis_result:
                 
                 if "draw" in exec_globals:
                     fig = exec_globals["draw"]()
-                    
-                    # [핵심] use_container_width=False로 해야 강제 늘림 없이 
-                    # figsize=(6,6) 크기(정사각형) 그대로 나옵니다.
+                    # 강제 늘림 방지 (use_container_width=False)
                     st.pyplot(fig, use_container_width=False)
                 else:
                     st.warning("그래프 함수를 찾을 수 없습니다.")
