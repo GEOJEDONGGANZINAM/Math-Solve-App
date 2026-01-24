@@ -271,41 +271,33 @@ if st.session_state.analysis_result:
             st.markdown("---")
             
             if method_id in methods:
-                # 1. 구분선(---)으로 단계 분리
-                steps_raw = methods[method_id].split("---")
+                # 1. 먼저 전체 텍스트에서 '백틱(`)'과 'arrow'를 싹 다 지우고 시작합니다. (가장 확실한 방법)
+                # 형광펜 원인(백틱) 제거
+                clean_full_text = methods[method_id].replace('`', '').replace('```', '')
+                
+                # arrow 글자(이모지 코드 포함) 제거 정규식
+                # :arrow_down:, arrow, ->, ↓ 등을 찾아서 공백으로 바꿈
+                clean_full_text = re.sub(r'(?i)(:?arrow[a-z_0-9]*:?|[↓→])', '', clean_full_text)
+
+                # 2. 깨끗해진 텍스트를 단계(---)별로 나눕니다.
+                steps_raw = clean_full_text.split("---")
                 steps = [s.strip() for s in steps_raw if s.strip()]
                 
                 for i, step_text in enumerate(steps):
                     lines = step_text.split('\n')
                     
-                    # 제목과 본문 1차 분리
+                    # 제목과 본문 분리
                     raw_title = lines[0].strip()
                     body_lines = lines[1:]
                     body_text = '\n'.join(body_lines).strip()
                     
-                    # ==========================================================
-                    # [필터링 구역] 형님, 여기서 무조건 다 지웁니다.
-                    # ==========================================================
-                    
-                    # 1. [형광펜 박멸] 백틱(`)은 문장 전체에서 그냥 삭제 (가장 확실함)
-                    raw_title = raw_title.replace('`', '').replace('"', '')
-                    body_text = body_text.replace('`', '').replace('"', '')
-
-                    # 2. [Arrow 박멸] arrow가 들어간 모든 단어, 이모지 문법, 기호 삭제
-                    # (?i): 대소문자 무시
-                    # :?arrow[^:\s]*:? : :arrow_down:, arrow_down, arrow 등 모든 패턴
-                    junk_pattern = r'(?i)(:?arrow[^:\s]*:?|[↓→]|[\[\]]|step\s*\d*|단계|#)'
-                    
-                    clean_title = re.sub(junk_pattern, '', raw_title).strip()
-                    body_text = re.sub(junk_pattern, '', body_text).strip()
-                    
-                    # 3. 혹시 제목 다 지워졌으면 기본값
+                    # [제목 청소] 혹시 남아있을 수 있는 잡동사니(step, #, 괄호 등) 제거
+                    clean_title = re.sub(r'(?i)(step\s*\d*|단계|\[.*?\]|#)', '', raw_title).strip()
                     if not clean_title: clean_title = "풀이 과정"
 
-                    # 4. [수식 보정] $ 앞뒤 띄어쓰기 (LaTeX 렌더링용)
+                    # [수식 보정] LaTeX($) 렌더링을 위해 $ 앞뒤에 강제로 공백 주입
+                    # (이게 없으면 수식이 텍스트랑 붙어서 깨져 보임)
                     body_text = re.sub(r'(?<!\$)\$(?!\$)', ' $ ', body_text)
-                    
-                    # ==========================================================
                     
                     # UI 출력
                     with st.expander(f"STEP {i+1}: {clean_title}", expanded=True):
