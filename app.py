@@ -69,6 +69,17 @@ st.markdown("""
     div[data-testid="stRadio"] label p {
         color: #000000 !important;
         font-weight: 700 !important;
+        background-color: transparent !important; /* 배경색 투명 강제 */
+    }
+    /* 선택된 라디오 버튼 텍스트의 형광펜도 제거 */
+    div[data-testid="stRadio"] div[role="radiogroup"] > div > label[data-baseweb="radio"] > div:last-child > p {
+        background-color: transparent !important;
+        color: #000000 !important;
+    }
+    /* 선택된 버튼 색상 (빨간색) */
+    div[data-testid="stRadio"] label[data-baseweb="radio"] input:checked + div > div {
+        background-color: #ef4444 !important;
+        border-color: #ef4444 !important;
     }
     
     .stButton > button {
@@ -103,6 +114,16 @@ st.markdown("""
         color: #000000 !important;
         font-weight: 600 !important;
     }
+
+    .streamlit-expanderContent p, .streamlit-expanderContent li {
+        line-height: 1.7 !important; /* 줄간격 170% */
+        margin-bottom: 1.2em !important; /* 문단 아래 여백 추가 */
+    }
+    /* 수식($$)이 있는 문단의 간격 조정 */
+    .katex-display {
+        margin: 1.5em 0 !important;
+    }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -259,18 +280,23 @@ if st.session_state.analysis_result:
                     # 제목 추출 (첫 줄)
                     raw_title = lines[0].strip()
                     
-                    # [청소] 제목에 껴있는 arrow, step, :arrow_down: 등 찌꺼기 제거
-                    clean_title = re.sub(r'(?i)(arrow_down|:arrow_down:|arrow|\s*\|\s*|_|step\s*\d*|단계|\[.*?\]|#)', '', raw_title).strip()
-                    # 혹시 제목이 비어있으면 임의로 채움
+                    # [청소 1] 제목에서 arrow, step, 단계, 특수기호 싹 다 제거
+                    # (?i): 대소문자 무시
+                    # arrow[^ ]*: arrow로 시작하는 단어 (arrow_down, arrowstyle 등)
+                    # :[^:]*arrow[^:]*:: 콜론(:) 사이에 arrow가 들어간 이모지
+                    # [↓→]: 화살표 기호
+                    clean_title = re.sub(r'(?i)(arrow[^ ]*|:[^:]*arrow[^:]*:|[↓→]|\s*\|\s*|_|step\s*\d*|단계|\[.*?\]|#)', '', raw_title).strip()
                     if not clean_title: clean_title = "풀이 단계"
 
-                    # 본문 추출 (둘째 줄부터)
+                    # 본문 추출
                     body_lines = lines[1:]
                     body_text = '\n'.join(body_lines).strip()
                     
-                    # [청소] 본문에 남아있는 arrow 텍스트 및 백틱(`) 제거
-                    body_text = re.sub(r'(?i)(arrow_down|:arrow_down:)', '', body_text) # arrow 글자 삭제
-                    body_text = body_text.replace('`', '').replace('```', '') # 형광펜(백틱) 삭제
+                    # [청소 2] 본문에 남은 arrow 텍스트 제거
+                    body_text = re.sub(r'(?i)(arrow[^ ]*|:[^:]*arrow[^:]*:|[↓→])', '', body_text)
+                    
+                    # [청소 3] 백틱(`) 제거 (형광펜 효과 삭제)
+                    body_text = body_text.replace('`', '').replace('```', '')
                     
                     # [보정] LaTeX 수식($) 렌더링을 위해 앞뒤 공백 주입 (수식 깨짐 방지)
                     body_text = re.sub(r'(?<!\$)\$(?!\$)', ' $ ', body_text) 
