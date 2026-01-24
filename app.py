@@ -10,7 +10,7 @@ import traceback
 # ==========================================
 # 1. 디자인 & 스타일 (1호기의 유서: 스크롤 고정 최종판)
 # ==========================================
-st.set_page_config(layout="wide", page_title="최승규 2호기 - 순정")
+st.set_page_config(layout="wide", page_title="최승규 2호기")
 
 st.markdown("""
 <style>
@@ -35,10 +35,10 @@ st.markdown("""
         margin-bottom: 0.5em !important;
     }
     
-    /* [수정] 수식(LaTeX) 글씨 크기 확대 (분수 잘 보이게) */
+    /* [수정] 수식 폰트 크기 (형님이 원하신 1.1em 적용) */
     .katex { 
-        font-size: 1.4em !important; 
-        line-height: 1.6 !important;
+        font-size: 1.1em !important; 
+        line-height: 1.5 !important;
         color: inherit !important; 
     }
     
@@ -46,36 +46,31 @@ st.markdown("""
     section[data-testid="stSidebar"] * { color: #ffffff !important; }
 
     /* ====================================================================
-       [생존 코드] 스크롤 따라오기 (Sticky) - Stretch 해제 기술
+       [챗지피티 & 1호기 합작] 스크롤 따라오기 (Sticky) - 최종 완결판
        ==================================================================== */
     
-    /* 1. 최상위 스크롤 잠금 해제 */
-    [data-testid="stAppViewContainer"] {
-        overflow-y: scroll !important;
-        overflow-x: hidden !important;
-    }
-    [data-testid="stMainBlock"] {
-        overflow: visible !important;
-    }
+    /* 1. [챗지피티 조언 반영] 강제 스크롤 설정(overflow) 삭제 */
+    /* stAppViewContainer 등에 강제로 scroll을 주던 코드를 뺐습니다. 
+       이제 Streamlit 본연의 스크롤 기능을 방해하지 않습니다. */
 
-    /* 2. [핵심] 가로 컨테이너가 자식들을 억지로 늘리지 않게 함 (Stretch 해제) */
-    /* 이걸 flex-start로 해야 오른쪽 기둥이 짧아져서 sticky가 먹힙니다 */
+    /* 2. 가로 컨테이너가 자식 높이를 억지로 늘리지 않게 함 (필수 유지) */
     [data-testid="stHorizontalBlock"] {
         align-items: flex-start !important;
     }
 
-    /* 3. 오른쪽(2번째) 컬럼을 화면 상단에 고정 */
-    /* div[data-testid="column"]:has(#sticky-anchor) 선택자 사용 */
-    div[data-testid="column"]:has(#sticky-anchor) {
+    /* 3. [챗지피티 조언 반영] Sticky 타겟을 아주 촘촘하게 설정 (버전 내성 강화) */
+    /* 하나의 이름만 믿지 않고, 걸릴 수 있는 모든 놈들을 다 잡아냅니다 */
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(#sticky-anchor),
+    div[data-testid="stVerticalBlock"]:has(#sticky-anchor),
+    div[data-testid="column"]:has(#sticky-anchor),
+    div[data-testid="stColumn"]:has(#sticky-anchor) {
         position: -webkit-sticky !important;
         position: sticky !important;
-        top: 5rem !important; /* 메뉴바 아래에 착! */
-        
+        top: 5rem !important; /* 상단 메뉴바 아래에 고정 */
         z-index: 1000 !important;
         
-        /* 높이를 내용물만큼만 잡음 (늘어나지 않음) */
         height: fit-content !important;
-        align-self: start !important; 
+        align-self: flex-start !important; /* 이 부분도 확실하게 추가 */
         display: block !important;
     }
 </style>
