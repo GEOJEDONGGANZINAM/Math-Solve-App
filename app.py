@@ -237,18 +237,20 @@ if uploaded_file and st.session_state.analysis_result is None:
                         st.error(f"분석 중 오류가 발생했습니다: {e}")
                         st.write(traceback.format_exc())
 
+# [상태 3] 분석 결과 표시
 if st.session_state.analysis_result:
     # 1. 원본 텍스트 가져오기
     full_text = st.session_state.analysis_result
     
     # ==============================================================================
-    # [텍스트 세탁소] 형광, Arrow, 그리고 /Right 에러 박멸
+    # [텍스트 세탁소] 제미나이 웹사이트처럼 찌꺼기(Arrow, 형광) 제거
     # ==============================================================================
     
     # (1) [형광 제거] 백틱(`) 삭제
     full_text = full_text.replace("`", "")
     
-    # (2) [Arrow 제거] .arrow_down 등 단어 삭제
+    # (2) [Arrow 제거] .arrow_down 등 내부 명령어 삭제
+    # 제미나이 웹에서는 안 보이지만 API에서는 보이는 것들을 여기서 지웁니다.
     bad_words = [
         ".arrow_down", "arrow_down", ":arrow_down:", 
         "arrow_up", ":arrow_up:", ".arrow_up",
@@ -258,9 +260,9 @@ if st.session_state.analysis_result:
         full_text = re.sub(re.escape(word), '', full_text, flags=re.IGNORECASE)
 
     # (3) [빨간글씨 /Right 제거] 
-    # Gemini가 화살표를 쓸 때 \Right라고 오타를 내면 빨간 에러가 뜹니다. -> 로 치환.
-    full_text = full_text.replace(r"\Right", "→")  # LaTeX 문법 에러
-    full_text = full_text.replace("/Right", "→")   # 혹시 모를 텍스트
+    # LaTeX 문법 오류 자동 수정
+    full_text = full_text.replace(r"\Right", "→")
+    full_text = full_text.replace("/Right", "→")
     full_text = full_text.replace(r"\Rightarrow", "→")
     full_text = full_text.replace(r"\implies", "→")
     
@@ -321,20 +323,20 @@ if st.session_state.analysis_result:
                     body_text = re.sub(r'(?<!\$)\$(?!\$)', ' $ ', body_text)
                     
                     # ==========================================================
-                    # [수정됨] st.expander(접는 기능) 삭제 -> 그냥 Markdown으로 출력
+                    # [화면 출력] 접기 기능 없이 시원하게 보여줍니다.
                     # ==========================================================
                     
                     # 1. 제목 (헤더로 강조)
                     st.markdown(f"#### 🔹 STEP {i+1}: {clean_title}")
                     
-                    # 2. 본문 내용 (그냥 출력)
+                    # 2. 본문 내용
                     st.markdown(body_text)
                     
                     # 3. 그래프 버튼
                     if st.button(f"📊 그래프 보기 (Step {i+1})", key=f"btn_{method_id}_{i}"):
                         st.session_state.step_index = i + 1
                     
-                    # 4. 구분선 (접는 박스가 없으니 선으로 구분)
+                    # 4. 구분선
                     st.markdown("---") 
 
             else:
@@ -356,3 +358,9 @@ if st.session_state.analysis_result:
                 else:
                     st.error("그래프 함수(draw)를 찾을 수 없습니다.")
             except Exception as e:
+                st.info("그래프를 생성하려면 왼쪽에서 단계를 선택하거나, 코드를 확인하세요.")
+
+    except Exception as e:
+        # [수리 완료] 들여쓰기 에러 해결됨
+        st.error("결과 처리 중 오류가 발생했습니다.")
+        st.write(traceback.format_exc())
