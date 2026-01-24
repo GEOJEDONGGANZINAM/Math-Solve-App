@@ -8,7 +8,7 @@ import re
 import traceback
 
 # ==========================================
-# 1. 디자인 & 스타일 (1호기의 유서: 스크롤 고정 최종판)
+# 1. 디자인 & 스타일 (형님이 주신 코드 100% 유지)
 # ==========================================
 st.set_page_config(layout="wide", page_title="최승규 2호기")
 
@@ -35,7 +35,7 @@ st.markdown("""
         margin-bottom: 0.5em !important;
     }
     
-    /* [수정] 수식 폰트 크기 (형님이 원하신 1.1em 적용) */
+    /* 수식 폰트 크기 (형님이 원하신 1.1em 적용) */
     .katex { 
         font-size: 1.1em !important; 
         line-height: 1.5 !important;
@@ -46,20 +46,17 @@ st.markdown("""
     section[data-testid="stSidebar"] * { color: #ffffff !important; }
 
     /* ====================================================================
-       [챗지피티 & 1호기 합작] 스크롤 따라오기 (Sticky) - 최종 완결판
+       [형님이 주신 완벽한 스크롤 고정 CSS]
        ==================================================================== */
     
-    /* 1. [챗지피티 조언 반영] 강제 스크롤 설정(overflow) 삭제 */
-    /* stAppViewContainer 등에 강제로 scroll을 주던 코드를 뺐습니다. 
-       이제 Streamlit 본연의 스크롤 기능을 방해하지 않습니다. */
+    /* 1. 강제 스크롤 설정 삭제됨 (유지) */
 
     /* 2. 가로 컨테이너가 자식 높이를 억지로 늘리지 않게 함 (필수 유지) */
     [data-testid="stHorizontalBlock"] {
         align-items: flex-start !important;
     }
 
-    /* 3. [챗지피티 조언 반영] Sticky 타겟을 아주 촘촘하게 설정 (버전 내성 강화) */
-    /* 하나의 이름만 믿지 않고, 걸릴 수 있는 모든 놈들을 다 잡아냅니다 */
+    /* 3. Sticky 타겟 설정 (유지) */
     div[data-testid="stVerticalBlockBorderWrapper"]:has(#sticky-anchor),
     div[data-testid="stVerticalBlock"]:has(#sticky-anchor),
     div[data-testid="column"]:has(#sticky-anchor),
@@ -70,7 +67,7 @@ st.markdown("""
         z-index: 1000 !important;
         
         height: fit-content !important;
-        align-self: flex-start !important; /* 이 부분도 확실하게 추가 */
+        align-self: flex-start !important; 
         display: block !important;
     }
 </style>
@@ -116,7 +113,7 @@ if st.session_state.analysis_result is None:
         try:
             model = genai.GenerativeModel('gemini-2.5-flash')
             
-            # [프롬프트] 제목 복구 & 분수 확대 & 그래프 오류 방지
+            # [수정 1] 본문 줄바꿈 강제 명령 추가
             prompt = """
             너는 대한민국 1타 수학 강사야. 이 문제를 학생에게 설명하듯이 **3가지 방식**으로 친절하고 명확하게 풀이해줘.
 
@@ -130,6 +127,9 @@ if st.session_state.analysis_result is None:
                - LaTeX($...$) 사용.
                - **[핵심] 분수는 무조건 `\\dfrac` (Display Fraction) 사용.** (글씨 크게)
                - 개조식(-), 'Step' 단어 금지.
+            4. **[줄바꿈 필수 - 매우 중요]**: 
+               - 가독성을 위해 **모든 문장이 끝날 때마다(마침표 뒤) 무조건 줄바꿈**을 해. 
+               - 절대 문장을 옆으로 이어서 쓰지 마. (엔터 두 번 쳐서 간격 벌려도 좋아)
 
             **[그래프 코드 요청 - 오류 절대 금지]**
             풀이 맨 마지막에 **반드시** 그래프를 그리는 Python 코드를 작성해.
@@ -203,8 +203,9 @@ if st.session_state.analysis_result:
                 
                 if "draw" in exec_globals:
                     fig = exec_globals["draw"]()
-                    # 강제 늘림 방지 (정사각형 유지)
-                    st.pyplot(fig, use_container_width=False)
+                    # [수정 2] 그래프 크기 원상복구 (1.png처럼 꽉 차게)
+                    # use_container_width=True로 변경하여 컬럼 너비에 맞춤
+                    st.pyplot(fig, use_container_width=True)
                 else:
                     st.warning("그래프 함수를 찾을 수 없습니다.")
             except Exception as e:
