@@ -8,7 +8,7 @@ import re
 import traceback
 
 # ==========================================
-# 1. 디자인 & 스타일 (Sticky Graph - 1호기의 구출 작전)
+# 1. 디자인 & 스타일 (1호기의 필사적인 수정)
 # ==========================================
 st.set_page_config(layout="wide", page_title="최승규 2호기 - 순정")
 
@@ -59,11 +59,15 @@ st.markdown("""
     }
     
     /* ====================================================================
-       [형님 구출 코드] 스크롤 따라오기 (Sticky) - 잠금 해제 버전
+       [형님 구출 코드 v2] 스크롤 따라오기 (Sticky) - 잠금 완전 해제
        ==================================================================== */
     
-    /* 1. 최상위 부모들의 스크롤 잠금(overflow: hidden/auto)을 해제하여 sticky가 먹히게 함 */
-    [data-testid="stAppViewContainer"], [data-testid="stMainBlock"] {
+    /* 1. 최상위 컨테이너의 스크롤 잠금 해제 (이게 막혀있으면 sticky가 안됩니다) */
+    [data-testid="stAppViewContainer"] {
+        overflow-y: scroll !important;
+        overflow-x: hidden !important;
+    }
+    [data-testid="stMainBlock"] {
         overflow: visible !important;
     }
     
@@ -73,7 +77,7 @@ st.markdown("""
     }
 
     /* 3. 'sticky-target' 표식이 있는 오른쪽 컬럼을 타겟팅 */
-    /* top: 5rem은 화면 상단 메뉴바(약 3~4rem)를 피해서 고정하는 위치입니다 */
+    /* top: 5rem은 화면 상단 메뉴바를 피해서 고정하는 위치입니다 */
     div[data-testid="column"]:has(#sticky-target) {
         position: -webkit-sticky !important;
         position: sticky !important;
@@ -82,8 +86,7 @@ st.markdown("""
         /* [핵심] 높이를 내용물만큼만 잡아야 움직일 공간이 생김 */
         height: fit-content !important; 
         
-        z-index: 100 !important;
-        overflow: visible !important;
+        z-index: 999 !important;
         display: block !important;
     }
 </style>
@@ -132,7 +135,7 @@ if st.session_state.analysis_result is None:
         try:
             model = genai.GenerativeModel('gemini-2.5-flash')
             
-            # [프롬프트 수정] 글씨 겹침 방지 명령 추가
+            # [프롬프트 수정] 비율 고정(equal) & 길이 표시 & 겹침 방지
             prompt = """
             너는 대한민국 1타 수학 강사야. 이 문제를 학생에게 설명하듯이 **3가지 방식**으로 친절하고 명확하게 풀이해줘.
 
@@ -146,20 +149,19 @@ if st.session_state.analysis_result is None:
                - **# Method 2: 빠른 풀이** (실전 스킬)
                - **# Method 3: 직관 풀이** (도형/그래프 해석)
 
-            **[그래프 코드 요청 - 매우 중요]**
+            **[그래프 코드 요청 - 생명줄]**
             풀이 맨 마지막에 **반드시** 그래프를 그리는 Python 코드를 작성해.
             - 코드는 `#CODE_START#` 와 `#CODE_END#` 로 감싸줘.
             - 함수 이름: `def draw(method):`
             - **[중요 1]** 각 Method의 '최종 결과(Final State)' 그래프 하나만 그려. (중간 과정 X)
-            - `figsize=(6, 6)` 고정. (절대 변경 금지)
+            - **[중요 2 - 비율 고정]**: 코드 안에 반드시 `ax.set_aspect('equal')`을 넣어서 그래프가 찌그러지거나 늘어나지 않게 정사각형 비율을 유지해.
+            - **[중요 3 - 표현 규칙]**:
+                - **좌표 및 식**: 주요 점과 함수 식을 표시해.
+                - **길이 표시(필수)**: 선분의 길이(예: AB=8, BC=2루트2 등)를 계산해서 그래프 위에 텍스트로 꼭 표시해줘.
+                - **글씨 겹침 방지**: `plt.text` 사용 시 `ha`, `va` 옵션과 좌표 오프셋(+0.2 등)을 조절해서 선이나 점과 글씨가 겹치지 않게 해.
+            - **[중요 4 - 글씨 크기]**: 그래프 내부의 모든 텍스트는 **반드시 `fontsize=9`로 통일**해.
+            - `figsize=(6, 6)` 고정.
             - 한글 대신 영어 사용.
-            - **[중요 2 - 표현 규칙]**:
-                - **그래프(함수)**인 경우: 주요 **점의 좌표**와 **그래프 식**만 표시해.
-                - **도형(기하)**인 경우: **변의 길이**, **각의 크기**, **보조선**만 표시해.
-                - 그 외 불필요한 요소(복잡한 격자, 너무 많은 눈금 등)는 제거해서 깔끔하게 해.
-            - **[중요 3 - 글씨 크기 및 겹침 방지]**: 
-                - 그래프 내부의 모든 텍스트(좌표, 식 등)는 **반드시 `fontsize=9`로 통일**해.
-                - **텍스트가 서로 겹치거나 선에 가려지지 않도록**, `plt.text`나 `annotate`를 쓸 때 좌표에 **약간의 오프셋(offset)을 주거나 정렬(ha, va)을 조정**해서 가독성을 높여. (예: 점의 오른쪽 위, 또는 아래에 배치)
             
             자, 바로 # Method 1부터 시작해.
             """
@@ -231,6 +233,8 @@ if st.session_state.analysis_result:
                 
                 if "draw" in exec_globals:
                     fig = exec_globals["draw"](st.session_state.graph_method)
+                    # [수정] use_container_width=True를 쓰되, 
+                    # 프롬프트에서 ax.set_aspect('equal')을 줬기 때문에 찌그러지지 않고 비율 유지됨
                     st.pyplot(fig, use_container_width=True)
                 else:
                     st.warning("그래프 함수를 찾을 수 없습니다.")
