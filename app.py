@@ -8,7 +8,7 @@ import re
 import traceback
 
 # ==========================================
-# 1. 디자인 & 스타일 (스크롤 따라오기 & 순정 모드)
+# 1. 디자인 & 스타일 (Sticky Graph & Font Size 20px)
 # ==========================================
 st.set_page_config(layout="wide", page_title="최승규 2호기 - 순정")
 
@@ -18,9 +18,7 @@ st.markdown("""
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
     * { font-family: 'Pretendard', sans-serif !important; }
     
-    /* [핵심] 다크/라이트 모드 자동 대응 */
-    
-    /* 본문 텍스트 스타일 */
+    /* [핵심 1] 본문 텍스트 스타일 (16px 유지) */
     .stMarkdown p, .stMarkdown li {
         font-size: 16px !important;
         line-height: 1.8 !important;
@@ -28,14 +26,19 @@ st.markdown("""
         margin-bottom: 1em !important;
     }
     
+    /* [핵심 2] 제목(Method 1, 2, 3) 글씨 크기 수정 */
+    /* 형님 요청대로 20px로 설정하고 굵게 처리 */
+    h1, h2, h3 {
+        font-size: 20px !important; 
+        font-weight: 700 !important; /* 굵게(Bold) */
+        color: inherit !important;
+        margin-top: 1.5em !important;
+        margin-bottom: 0.5em !important;
+        letter-spacing: -0.5px !important;
+    }
+    
     /* 수식 스타일 */
     .katex { font-size: 1.1em !important; color: inherit !important; }
-    
-    /* 헤더 스타일 */
-    h1, h2, h3 {
-        color: inherit !important;
-        font-weight: 700 !important;
-    }
     
     /* 버튼 스타일 */
     .stButton > button {
@@ -58,18 +61,18 @@ st.markdown("""
          color: #ffffff !important;
     }
     
-    /* [NEW] 스크롤 따라오기 (Sticky Graph) 강력 적용 */
-    /* 1. 먼저 가로 컨테이너(Row)가 자식 높이를 꽉 채우지 않도록 설정 (stretch 방지) */
+    /* [핵심 3] 스크롤 따라오기 (Sticky Graph) 유지 */
     [data-testid="stHorizontalBlock"] {
         align-items: flex-start !important;
     }
     
-    /* 2. 두 번째 컬럼(오른쪽 그래프)을 화면 상단에 고정 */
-    /* nth-of-type(2)는 가로 배치된 요소 중 두 번째(그래프 컬럼)를 뜻함 */
     [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-of-type(2) {
+        position: -webkit-sticky !important;
         position: sticky !important;
-        top: 3rem !important; /* 상단 여백 확보 */
-        z-index: 999; /* 다른 요소보다 위에 보이도록 */
+        top: 3rem !important;
+        z-index: 100;
+        height: fit-content !important;
+        overflow: visible !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -120,19 +123,19 @@ if st.session_state.analysis_result is None:
         try:
             model = genai.GenerativeModel('gemini-2.5-flash')
             
-            # [프롬프트 수정] 인사말 금지 및 Method 1 시작 강제
+            # [프롬프트] 제목 크기 20px 적용을 위해 # (H1) 태그 사용 유도
             prompt = """
             너는 대한민국 1타 수학 강사야. 이 문제를 학생에게 설명하듯이 **3가지 방식**으로 친절하고 명확하게 풀이해줘.
 
             **[작성 원칙]**
-            1. **시작**: 서론, 인사말, 문제 요약 절대 하지 마. **무조건 '# Method 1'로 바로 시작해.**
+            1. **시작**: 서론, 인사말, 문제 요약 절대 하지 마. **무조건 '# Method 1'로 바로 시작해.** (반드시 # 하나만 써서 제목으로 만들어)
             2. **가독성**: 줄글보다는 개조식(-)을 사용하고, 문단 간격을 넉넉히 둬.
             3. **수식**: 모든 수식은 LaTeX 형식($...$)을 사용해. (예: 함수 $f(x) = x^2$)
             4. **금지**: 'Step 1', '화살표 기호(arrow)', '백틱(`) 강조'는 절대 쓰지 마. **Bold**만 사용해.
             5. **구조**:
-               - **Method 1: 정석 풀이** (논리적 서술)
-               - **Method 2: 빠른 풀이** (실전 스킬)
-               - **Method 3: 직관 풀이** (도형/그래프 해석)
+               - **# Method 1: 정석 풀이** (논리적 서술)
+               - **# Method 2: 빠른 풀이** (실전 스킬)
+               - **# Method 3: 직관 풀이** (도형/그래프 해석)
 
             **[그래프 코드 요청]**
             풀이 맨 마지막에 **반드시** 그래프를 그리는 Python 코드를 작성해.
@@ -142,7 +145,7 @@ if st.session_state.analysis_result is None:
             - `figsize=(6, 6)` 고정.
             - 한글 대신 영어 사용.
             
-            자, 바로 Method 1부터 시작해.
+            자, 바로 # Method 1부터 시작해.
             """
             
             response = model.generate_content([prompt, image])
@@ -177,8 +180,6 @@ if st.session_state.analysis_result:
     text_content = text_content.replace("arrow_down", "")
     
     # [세탁 2] 인사말 강제 삭제 (Method 1 앞부분 날리기)
-    # AI가 혹시라도 인사말을 넣었으면, 'Method 1' 글자 앞을 다 잘라버립니다.
-    # # Method 1, ## Method 1, **Method 1 등 다양한 패턴 감지
     match = re.search(r'(#+\s*Method\s*1|\*{2}Method\s*1|Method\s*1:)', text_content, re.IGNORECASE)
     if match:
         text_content = text_content[match.start():]
@@ -186,16 +187,14 @@ if st.session_state.analysis_result:
     # ==========================================
     # 화면 레이아웃 (3:2 비율)
     # ==========================================
-    # [요청 1 반영] 텍스트(3) : 그래프(2) 비율 (1.5 : 1)
     col_text, col_graph = st.columns([1.5, 1])
     
     with col_text:
-        st.markdown("### 📝 1타 강사 풀이")
-        st.markdown("---")
+        # 제목(20px) 적용된 텍스트 출력
         st.markdown(text_content)
         
     with col_graph:
-        # [요청 3 반영] 이 컬럼은 CSS에 의해 스크롤을 따라다닙니다(Sticky).
+        # [Sticky 적용됨]
         st.markdown("### 📐 그래프 시각화")
         
         # 그래프 선택 버튼
