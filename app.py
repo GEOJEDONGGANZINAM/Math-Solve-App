@@ -19,7 +19,7 @@ st.markdown("""
     
     .stApp { background-color: #ffffff !important; }
     
-    /* 본문 텍스트 가독성 (제미나이 웹과 유사하게) */
+    /* 본문 텍스트 가독성 */
     .stMarkdown p, .stMarkdown li {
         font-size: 16px !important;
         line-height: 1.8 !important;
@@ -56,6 +56,7 @@ if 'graph_method' not in st.session_state:
     st.session_state.graph_method = 1  # 기본값 Method 1
 
 try:
+    # 스트림릿 시크릿에서 키를 가져옵니다.
     api_key = st.secrets["GOOGLE_API_KEY"]
     genai.configure(api_key=api_key)
 except Exception:
@@ -77,7 +78,7 @@ with st.sidebar:
         st.rerun()
 
 # ==========================================
-# 4. 메인 로직 (복잡한 파싱 제거)
+# 4. 메인 로직
 # ==========================================
 if not uploaded_file:
     st.info("👈 왼쪽에서 문제 사진을 업로드하면 바로 풀이가 시작됩니다.")
@@ -97,7 +98,7 @@ if st.session_state.analysis_result is None:
                 try:
                     model = genai.GenerativeModel('gemini-2.5-flash')
                     
-                    # [프롬프트] 파싱을 위한 특수 토큰 제거 -> 자연스러운 마크다운 출력 요청
+                    # [프롬프트] 순정 모드 요청
                     prompt = """
                     너는 대한민국 1타 수학 강사야. 이 문제를 학생에게 설명하듯이 **3가지 방식**으로 친절하고 명확하게 풀이해줘.
 
@@ -133,8 +134,7 @@ if st.session_state.analysis_result is None:
 if st.session_state.analysis_result:
     full_text = st.session_state.analysis_result
     
-    # 1. 텍스트와 코드 분리 (단순 스플릿)
-    # 제미나이가 코드를 #CODE_START# ... #CODE_END# 로 감싸서 줍니다.
+    # 1. 텍스트와 코드 분리
     text_content = full_text
     code_content = ""
     
@@ -144,23 +144,23 @@ if st.session_state.analysis_result:
         
         if "#CODE_END#" in parts[1]:
             code_content = parts[1].split("#CODE_END#")[0] # 코드 부분
-            # 뒤에 남은 텍스트가 있다면 붙이기
-            text_content += parts[1].split("#CODE_END#")[1]
+            # 코드 뒤에 설명이 더 있다면 붙이기
+            if len(parts[1].split("#CODE_END#")) > 1:
+                text_content += parts[1].split("#CODE_END#")[1]
 
-    # [중요] 텍스트 세탁 (최소한의 안전장치)
-    # 백틱(`)만 제거하면 형광 문제는 99% 해결됩니다.
+    # [최소한의 세탁] 백틱(`)과 arrow_down 텍스트만 제거
     text_content = text_content.replace("`", "")
-    text_content = text_content.replace("arrow_down", "") # 혹시 모를 텍스트 제거
+    text_content = text_content.replace("arrow_down", "")
 
     # ==========================================
-    # 화면 레이아웃: [왼쪽: 설명 텍스트] / [오른쪽: 그래프]
+    # 화면 레이아웃
     # ==========================================
     col_text, col_graph = st.columns([1.2, 1])
     
     with col_text:
         st.markdown("### 📝 1타 강사 풀이")
         st.markdown("---")
-        # [핵심] 제미나이의 답변을 그대로 렌더링 (가장 자연스러움)
+        # 제미나이 답변 그대로 출력
         st.markdown(text_content)
         
     with col_graph:
@@ -177,7 +177,7 @@ if st.session_state.analysis_result:
         # 코드 실행 및 그래프 그리기
         if code_content:
             try:
-                # 코드 정리 (마크다운 기호 제거)
+                # 코드 정리
                 clean_code = code_content.replace("```python", "").replace("```", "").strip()
                 
                 # 실행 환경
@@ -189,4 +189,9 @@ if st.session_state.analysis_result:
                     fig = exec_globals["draw"](st.session_state.graph_method)
                     st.pyplot(fig)
                 else:
-                    st.warning("그래프 함수
+                    st.warning("그래프 함수를 찾을 수 없습니다.")
+            except Exception as e:
+                st.error("그래프 생성 중 오류가 발생했습니다.")
+                st.write(e) # 구체적인 에러 내용 표시
+        else:
+            st.info("이 문제에 대한 시각화 코드가 생성되지 않았습니다.")
