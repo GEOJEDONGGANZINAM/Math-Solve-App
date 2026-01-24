@@ -8,7 +8,7 @@ import re
 import traceback
 
 # ==========================================
-# 1. 디자인 & 스타일 (Sticky Graph & Font Size 20px)
+# 1. 디자인 & 스타일 (Sticky Graph Fixed)
 # ==========================================
 st.set_page_config(layout="wide", page_title="최승규 2호기 - 순정")
 
@@ -18,33 +18,39 @@ st.markdown("""
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
     * { font-family: 'Pretendard', sans-serif !important; }
     
-    /* 본문 & 제목 스타일 (기존 유지) */
+    /* [기존 유지] 텍스트 스타일 (16px) */
     .stMarkdown p, .stMarkdown li {
         font-size: 16px !important;
         line-height: 1.8 !important;
         color: inherit !important;
         margin-bottom: 1em !important;
     }
+    
+    /* [기존 유지] 제목 스타일 (20px, Bold) */
     h1, h2, h3 {
         font-size: 20px !important; 
         font-weight: 700 !important;
         color: inherit !important;
         margin-top: 1.5em !important;
         margin-bottom: 0.5em !important;
+        letter-spacing: -0.5px !important;
     }
     
-    /* 기타 스타일 (기존 유지) */
+    /* [기존 유지] 기타 컴포넌트 */
     .katex { font-size: 1.1em !important; color: inherit !important; }
+    
     .stButton > button {
         border-radius: 8px;
         border: 1px solid var(--default-textColor) !important;
         background-color: var(--background-color) !important;
         color: var(--text-color) !important;
+        transition: all 0.2s ease;
     }
     .stButton > button:hover {
         border-color: #00C4B4 !important;
         color: #00C4B4 !important;
     }
+
     section[data-testid="stSidebar"] {
         background-color: #00C4B4 !important;
     }
@@ -53,31 +59,20 @@ st.markdown("""
     }
     
     /* ====================================================================
-       [영혼의 한타] 스크롤 따라오기 (Sticky) - 최종 병기
+       [진짜_최종_수정] 스크롤 따라오기 (Sticky) - 정밀 타격 버전 (유지)
        ==================================================================== */
-    
-    /* 1. 이 코드는 '텍스트 컬럼'과 '그래프 컬럼'을 감싸는 부모를 찾아서
-          높이를 억지로 늘리지 못하게(flex-start) 막습니다. */
-    div[data-testid="stHorizontalBlock"] {
+    [data-testid="stHorizontalBlock"] {
         align-items: flex-start !important;
     }
 
-    /* 2. '그래프 컬럼' (2번째 기둥)을 화면에 본드로 붙여버립니다. */
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-of-type(2) {
-        position: -webkit-sticky !important; /* 사파리 브라우저 대응 */
+    [data-testid="stMainBlock"] > div > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"]:nth-child(1) > [data-testid="column"]:nth-child(2) {
+        position: -webkit-sticky !important;
         position: sticky !important;
-        top: 5rem !important; /* 화면 천장에서 주먹 하나만큼 띄우고 고정 */
-        
-        /* 아래 속성들이 없으면 sticky가 작동을 안 할 수 있음 */
-        z-index: 1000 !important;
-        display: block !important;
-        height: fit-content !important;
+        top: 5rem !important;
+        z-index: 100 !important;
         overflow: visible !important;
-    }
-    
-    /* 혹시 모를 내부 간섭 제거 */
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-of-type(2) > div {
         height: auto !important;
+        display: block !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -103,7 +98,6 @@ with st.sidebar:
     st.title("최승규 2호기")
     st.caption("Pure Gemini Mode")
     st.markdown("---")
-    # 파일 업로드 즉시 분석
     uploaded_file = st.file_uploader("문제 사진 업로드", type=["jpg", "png", "jpeg"], key="problem_uploader")
     
     st.markdown("---")
@@ -119,16 +113,14 @@ if not uploaded_file:
     st.info("👈 왼쪽 사이드바에서 문제 사진을 업로드하면 **즉시 풀이가 시작**됩니다.")
     st.stop()
 
-# 이미지 로드
 image = Image.open(uploaded_file)
 
-# 분석 결과가 없으면 실행
 if st.session_state.analysis_result is None:
     with st.spinner("🕵️‍♂️ 1타 강사가 문제를 분석하고 있습니다... 잠시만 기다려주세요."):
         try:
             model = genai.GenerativeModel('gemini-2.5-flash')
             
-            # [프롬프트] 제목 크기 20px 적용을 위해 # (H1) 태그 사용 유도
+            # [프롬프트 수정] 그래프 표현 방식 및 글씨 크기 지침 추가
             prompt = """
             너는 대한민국 1타 수학 강사야. 이 문제를 학생에게 설명하듯이 **3가지 방식**으로 친절하고 명확하게 풀이해줘.
 
@@ -142,13 +134,18 @@ if st.session_state.analysis_result is None:
                - **# Method 2: 빠른 풀이** (실전 스킬)
                - **# Method 3: 직관 풀이** (도형/그래프 해석)
 
-            **[그래프 코드 요청]**
+            **[그래프 코드 요청 - 매우 중요]**
             풀이 맨 마지막에 **반드시** 그래프를 그리는 Python 코드를 작성해.
             - 코드는 `#CODE_START#` 와 `#CODE_END#` 로 감싸줘.
             - 함수 이름: `def draw(method):`
-            - **[중요]** 각 Method의 '최종 결과(Final State)' 그래프 하나만 그려. (중간 과정 X)
+            - **[중요 1]** 각 Method의 '최종 결과(Final State)' 그래프 하나만 그려. (중간 과정 X)
             - `figsize=(6, 6)` 고정.
             - 한글 대신 영어 사용.
+            - **[중요 2 - 표현 규칙]**:
+                - **그래프(함수)**인 경우: 주요 **점의 좌표**와 **그래프 식**만 표시해.
+                - **도형(기하)**인 경우: **변의 길이**, **각의 크기**, **보조선**만 표시해.
+                - 그 외 불필요한 요소(복잡한 격자, 너무 많은 눈금 등)는 제거해서 깔끔하게 해.
+            - **[중요 3 - 글씨 크기]**: 그래프 내부의 모든 텍스트(좌표, 식, 각도, 길이 등)는 **반드시 `fontsize=9`로 통일**해.
             
             자, 바로 # Method 1부터 시작해.
             """
@@ -167,7 +164,7 @@ if st.session_state.analysis_result is None:
 if st.session_state.analysis_result:
     full_text = st.session_state.analysis_result
     
-    # 텍스트와 코드 분리
+    # 분리
     text_content = full_text
     code_content = ""
     
@@ -180,29 +177,28 @@ if st.session_state.analysis_result:
             if len(parts[1].split("#CODE_END#")) > 1:
                 text_content += parts[1].split("#CODE_END#")[1]
 
-    # [세탁 1] 백틱, arrow 제거
+    # 세탁
     text_content = text_content.replace("`", "")
     text_content = text_content.replace("arrow_down", "")
     
-    # [세탁 2] 인사말 강제 삭제 (Method 1 앞부분 날리기)
+    # 인사말 제거
     match = re.search(r'(#+\s*Method\s*1|\*{2}Method\s*1|Method\s*1:)', text_content, re.IGNORECASE)
     if match:
         text_content = text_content[match.start():]
 
     # ==========================================
-    # 화면 레이아웃 (2:1 비율)
+    # 화면 레이아웃 (2:1 비율 변경)
     # ==========================================
+    # [요청 1 반영] 텍스트(2) : 그래프(1) 비율
     col_text, col_graph = st.columns([2, 1])
     
     with col_text:
-        # 제목(20px) 적용된 텍스트 출력
         st.markdown(text_content)
         
     with col_graph:
         # [Sticky 적용됨]
         st.markdown("### 📐 그래프 시각화")
         
-        # 그래프 선택 버튼
         m1, m2, m3 = st.columns(3)
         if m1.button("Method 1"): st.session_state.graph_method = 1
         if m2.button("Method 2"): st.session_state.graph_method = 2
@@ -210,7 +206,6 @@ if st.session_state.analysis_result:
         
         st.caption(f"현재 보여주는 그래프: Method {st.session_state.graph_method} (최종 결과)")
 
-        # 코드 실행 및 그래프 그리기
         if code_content:
             try:
                 clean_code = code_content.replace("```python", "").replace("```", "").strip()
