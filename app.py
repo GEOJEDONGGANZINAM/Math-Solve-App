@@ -14,43 +14,37 @@ st.set_page_config(layout="wide", page_title="최승규 2호기 - 순정")
 
 st.markdown("""
 <style>
-    /* 폰트 설정 (기존 유지) */
+    /* 폰트 설정 */
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
     * { font-family: 'Pretendard', sans-serif !important; }
     
-    /* [기존 유지] 텍스트 스타일 */
+    /* 본문 & 제목 스타일 (기존 유지) */
     .stMarkdown p, .stMarkdown li {
         font-size: 16px !important;
         line-height: 1.8 !important;
         color: inherit !important;
         margin-bottom: 1em !important;
     }
-    
-    /* [기존 유지] 제목 스타일 (20px, Bold) */
     h1, h2, h3 {
         font-size: 20px !important; 
         font-weight: 700 !important;
         color: inherit !important;
         margin-top: 1.5em !important;
         margin-bottom: 0.5em !important;
-        letter-spacing: -0.5px !important;
     }
     
-    /* [기존 유지] 기타 스타일 */
+    /* 기타 스타일 (기존 유지) */
     .katex { font-size: 1.1em !important; color: inherit !important; }
-    
     .stButton > button {
         border-radius: 8px;
         border: 1px solid var(--default-textColor) !important;
         background-color: var(--background-color) !important;
         color: var(--text-color) !important;
-        transition: all 0.2s ease;
     }
     .stButton > button:hover {
         border-color: #00C4B4 !important;
         color: #00C4B4 !important;
     }
-
     section[data-testid="stSidebar"] {
         background-color: #00C4B4 !important;
     }
@@ -59,30 +53,31 @@ st.markdown("""
     }
     
     /* ====================================================================
-       [최종 수정] 스크롤 따라오기 (Sticky) - 강력 버전
+       [영혼의 한타] 스크롤 따라오기 (Sticky) - 최종 병기
        ==================================================================== */
     
-    /* 1. 컬럼을 감싸는 부모 컨테이너가 자식들을 억지로 늘리지 않게 함 */
-    [data-testid="stVerticalBlock"] > [style*="flex-direction: row"],
-    [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"] {
+    /* 1. 이 코드는 '텍스트 컬럼'과 '그래프 컬럼'을 감싸는 부모를 찾아서
+          높이를 억지로 늘리지 못하게(flex-start) 막습니다. */
+    div[data-testid="stHorizontalBlock"] {
         align-items: flex-start !important;
     }
 
-    /* 2. 오른쪽 컬럼(2번째 자식)을 화면 상단에 고정 */
-    /* div[data-testid="column"] 이 선택자가 핵심입니다. */
-    div[data-testid="column"]:nth-of-type(2) {
-        position: -webkit-sticky !important;
+    /* 2. '그래프 컬럼' (2번째 기둥)을 화면에 본드로 붙여버립니다. */
+    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-of-type(2) {
+        position: -webkit-sticky !important; /* 사파리 브라우저 대응 */
         position: sticky !important;
-        top: 4rem !important; /* 상단 메뉴바 감안해서 4rem 띄움 */
-        z-index: 999 !important;
+        top: 5rem !important; /* 화면 천장에서 주먹 하나만큼 띄우고 고정 */
         
-        /* 내용물이 잘리지 않게 설정 */
-        height: auto !important;
-        max-height: 100vh !important;
+        /* 아래 속성들이 없으면 sticky가 작동을 안 할 수 있음 */
+        z-index: 1000 !important;
+        display: block !important;
+        height: fit-content !important;
         overflow: visible !important;
-        
-        /* 배경이 투명하면 글씨랑 겹치니 살짝 배경색을 줍니다 (선택사항) */
-        /* background-color: var(--background-color) !important; */
+    }
+    
+    /* 혹시 모를 내부 간섭 제거 */
+    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-of-type(2) > div {
+        height: auto !important;
     }
 </style>
 """, unsafe_allow_html=True)
