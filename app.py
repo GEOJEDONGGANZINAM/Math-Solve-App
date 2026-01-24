@@ -8,7 +8,7 @@ import re
 import traceback
 
 # ==========================================
-# 1. 디자인 & 스타일 (1호기의 마지막 승부수)
+# 1. 디자인 & 스타일 (1호기의 필살 구출 작전)
 # ==========================================
 st.set_page_config(layout="wide", page_title="최승규 2호기 - 순정")
 
@@ -26,7 +26,7 @@ st.markdown("""
         margin-bottom: 1em !important;
     }
     
-    /* [기존 유지] 제목 스타일 */
+    /* [기존 유지] 제목 스타일 (20px, Bold) */
     h1, h2, h3 {
         font-size: 20px !important; 
         font-weight: 700 !important;
@@ -38,10 +38,8 @@ st.markdown("""
     /* [기존 유지] 기타 스타일 */
     .katex { font-size: 1.1em !important; color: inherit !important; }
     .stButton > button {
-        border-radius: 8px;
         border: 1px solid var(--default-textColor) !important;
         background-color: var(--background-color) !important;
-        color: var(--text-color) !important;
     }
     section[data-testid="stSidebar"] {
         background-color: #00C4B4 !important;
@@ -51,29 +49,28 @@ st.markdown("""
     }
     
     /* ====================================================================
-       [형님 살려내기] 스크롤 따라오기 (Sticky) - 구조 단순화 버전
+       [형님 구출 코드 v3] 스크롤 따라오기 - 'Inner Sticky' 기술
        ==================================================================== */
     
-    /* 1. 최상위 스크롤 잠금 해제 */
+    /* 1. 최상위 스크롤 잠금 해제 (필수) */
     [data-testid="stAppViewContainer"] {
         overflow-y: scroll !important;
         overflow-x: hidden !important;
     }
     
-    /* 2. 기둥들이 서로 키 맞추기(Stretch) 금지 -> 이게 핵심입니다 */
+    /* 2. 기둥들이 화면 끝까지 늘어나도록 둠 (Stretch 유지) */
+    /* 이렇게 해야 '트랙'이 길게 형성되어 스크롤 할 공간이 생깁니다 */
     [data-testid="stHorizontalBlock"] {
-        align-items: flex-start !important;
+        align-items: stretch !important;
     }
 
-    /* 3. 오른쪽 그래프 기둥 고정 */
-    /* 버튼을 없애서 내부 구조가 단순해졌으므로 더 잘 붙을 겁니다 */
-    div[data-testid="column"]:has(#sticky-target) {
+    /* 3. 오른쪽 기둥 자체가 아니라, 그 '내용물(알맹이)'을 고정시킴 */
+    /* 표식(#sticky-target)을 가진 컬럼의 '첫 번째 자식 div'를 타겟팅 */
+    div[data-testid="column"]:has(#sticky-target) > div {
         position: -webkit-sticky !important;
         position: sticky !important;
-        top: 5rem !important; 
-        height: fit-content !important; 
+        top: 5rem !important; /* 상단 메뉴바 아래에 착 붙음 */
         z-index: 999 !important;
-        display: block !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -83,7 +80,6 @@ st.markdown("""
 # ==========================================
 if 'analysis_result' not in st.session_state:
     st.session_state.analysis_result = None
-# graph_method 변수는 더 이상 필요 없지만 호환성을 위해 둠
 
 try:
     api_key = st.secrets["GOOGLE_API_KEY"]
@@ -119,7 +115,7 @@ if st.session_state.analysis_result is None:
         try:
             model = genai.GenerativeModel('gemini-2.5-flash')
             
-            # [프롬프트 대수술] 버튼 제거, 단일 그래프, 비율 고정, 글씨 겹침 방지
+            # [프롬프트] 글씨 겹침 해결 & 비율 고정 명령 강화
             prompt = """
             너는 대한민국 1타 수학 강사야. 이 문제를 학생에게 설명하듯이 **3가지 방식**으로 친절하고 명확하게 풀이해줘.
 
@@ -129,20 +125,20 @@ if st.session_state.analysis_result is None:
                - **# Method 1: 정석 풀이**
                - **# Method 2: 빠른 풀이**
                - **# Method 3: 직관 풀이**
-            3. **형식**: LaTeX($...$) 사용, 개조식(-), 'Step' 단어 사용 금지.
+            3. **형식**: LaTeX($...$) 사용, 개조식(-), 'Step' 단어 금지.
 
             **[그래프 코드 요청 - 형님을 위한 완벽한 그래프]**
             풀이 맨 마지막에 **반드시** 그래프를 그리는 Python 코드를 작성해.
             - 코드는 `#CODE_START#` 와 `#CODE_END#` 로 감싸줘.
-            - 함수 이름: `def draw():` (인자 없음. 그냥 하나의 완벽한 그래프만 그려)
+            - 함수 이름: `def draw():` (인자 없음)
             
             **[그래프 필수 조건 - 절대 어기지 마]**
             1. **비율 고정**: 코드에 `ax.set_aspect('equal')`을 꼭 넣어서 정사각형 비율 유지.
             2. **크기**: `plt.figure(figsize=(6, 6))`
-            3. **내용**: 문제의 **최종 정답 상태**를 그려. (함수 그래프, 도형, 보조선 모두 포함)
-            4. **글씨 겹침 방지 (Offset)**: 
-               - 점의 좌표나 길이를 표시할 때 `plt.text(x, y, ...)`를 쓰되, **x, y 좌표에 +0.3 또는 -0.3 정도 오프셋**을 줘서 점이나 선이랑 겹치지 않게 해.
-               - `ha='left'`, `va='bottom'` 같은 정렬 옵션을 적극 활용해.
+            3. **내용**: 문제의 **최종 정답 상태**를 그려.
+            4. **[핵심] 글씨 겹침 방지 (Offset)**: 
+               - 점의 좌표나 길이를 표시할 때 `plt.text(x, y, ...)`를 쓰되, **x, y 좌표에 +0.4 또는 -0.4 정도 오프셋**을 줘서 점이나 선이랑 겹치지 않게 해.
+               - `ha='left'`, `va='bottom'` 등을 상황에 맞게 조절해.
             5. **글씨 크기**: 모든 텍스트는 `fontsize=9`로 통일.
             6. **영어 사용**: 한글 깨짐 방지를 위해 모든 텍스트는 영어로 작성.
             
@@ -192,9 +188,8 @@ if st.session_state.analysis_result:
         # [Sticky Target]
         st.markdown('<div id="sticky-target"></div>', unsafe_allow_html=True)
         
+        # 제목
         st.markdown("### 📐 최종 시각화")
-        
-        # 버튼들 다 제거했습니다. 오직 결과만 봅니다.
         
         if code_content:
             try:
@@ -204,11 +199,10 @@ if st.session_state.analysis_result:
                 exec(clean_code, exec_globals)
                 
                 if "draw" in exec_globals:
-                    # [수정] 인자 없이 호출
                     fig = exec_globals["draw"]()
                     
-                    # [핵심] use_container_width=False로 설정하여 
-                    # 스트림릿이 강제로 늘리는 것을 막고, figsize=(6,6)을 있는 그대로 보여줍니다.
+                    # [핵심] use_container_width=False로 해야 강제 늘림 없이 
+                    # figsize=(6,6) 크기(정사각형) 그대로 나옵니다.
                     st.pyplot(fig, use_container_width=False)
                 else:
                     st.warning("그래프 함수를 찾을 수 없습니다.")
