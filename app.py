@@ -250,18 +250,25 @@ if st.session_state.analysis_result:
                 for i, step_text in enumerate(steps):
                     lines = step_text.split('\n')
                     
-                    # [청소] 화살표, 대괄호, 잡동사니 삭제
+                    # [수정할 부분] 여기서부터 ---
                     raw_title = lines[0].strip()
-                    import re
-                    clean_title = re.sub(r'(?i)(arrow_down|:arrow_down:|_|step|\[.*?\])', '', raw_title).strip()
+                    # 제목에서 불필요한 기호 제거
+                    clean_title = re.sub(r'(?i)(arrow_down|:arrow_down:|_|step|\[.*?\]|#)', '', raw_title).strip()
                     
-                    # [청소] 백틱(`) -> 달러($) 변환 (형광펜 제거)
+                    # 본문 내용 정리
                     body_lines = lines[1:]
                     body_text = '\n'.join(body_lines).strip()
-                    body_text = body_text.replace('`', '$').replace('$', ' $ ')
+                    
+                    # [중요] 1. 백틱(`) 제거 (형광펜 효과 삭제)
+                    # 2. LaTeX 수식($) 렌더링 보정을 위해 $ 앞뒤 공백 확보
+                    # 3. 불필요한 코드 블록 기호 제거
+                    body_text = body_text.replace('`', '').replace('```', '')
+                    # 수식($)이 붙어있으면 렌더링 안될 수 있으므로 띄어쓰기 주입 (단, $$는 유지)
+                    body_text = re.sub(r'(?<!\$)\$(?!\$)', ' $ ', body_text)
+                    # --- 여기까지 교체
                     
                     with st.expander(f"STEP {i+1}: {clean_title}", expanded=True):
-                        st.markdown(body_text)
+                        st.markdown(body_text) # 이제 Latex가 적용된 텍스트가 나옴
                         if st.button(f"📊 그래프 보기 (Step {i+1})", key=f"btn_{method_id}_{i}"):
                             st.session_state.step_index = i + 1
             else:
