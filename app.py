@@ -237,22 +237,26 @@ if uploaded_file and st.session_state.analysis_result is None:
                         st.error(f"분석 중 오류가 발생했습니다: {e}")
                         st.write(traceback.format_exc())
 
-# [상태 3] 분석 결과 표시
 if st.session_state.analysis_result:
-    # 1. [초강력 세탁기 가동] 원본 데이터 받자마자 무조건 필터링부터 합니다.
-    # 형님, 여기서 모든 잡동사니를 사전에 차단합니다.
+    # 1. 원본 텍스트 가져오기
     full_text = st.session_state.analysis_result
     
-    # (1) 형광펜(백틱) 박멸: 문장 전체에서 ` 기호 삭제
+    # ==============================================================================
+    # [최종 수정] 잡초 제거 (Arrow & 형광) - 정밀 타격 모드
+    # ==============================================================================
+    
+    # (1) 형광펜(백틱) 완전 박멸: 텍스트 전체에서 ` 기호 삭제
     full_text = full_text.replace("`", "").replace("```", "")
     
-    # (2) Arrow 박멸: .arrow_down, arrow_down, :arrow:, -> 등 모든 변종 삭제
-    # 정규식 설명: (?i)대소문자무시, [.:#_]* (앞에 점이나 특수문자), arrow (핵심단어), [\w-]* (뒤에 붙는 단어)
-    arrow_clean_pattern = r'(?i)([.:#_]*arrow[\w-]*:?|[↓→])'
-    full_text = re.sub(arrow_clean_pattern, '', full_text)
+    # (2) Arrow 박멸 (한글 보호 기능 추가)
+    # 설명: .arrow_down정석 처럼 붙어있어도 'arrow_down'만 떼어내고 '정석'은 남깁니다.
+    # [a-zA-Z0-9_-]* : 영어, 숫자, 언더바, 하이픈만 매칭 (한글은 매칭 안 됨)
+    # [.:#_]* : 앞부분 특수문자 처리
+    arrow_pattern = r'(?i)([.:#_]*arrow[a-zA-Z0-9_-]*[:\.]?|[↓→⇒⇔])'
+    full_text = re.sub(arrow_pattern, '', full_text)
     
-    # ------------------------------------------------------------------
-    
+    # ==============================================================================
+
     try:
         parts = full_text.split("#CODE#")
         text_full = parts[0]
@@ -297,8 +301,10 @@ if st.session_state.analysis_result:
                     
                     # 제목/본문 분리
                     raw_title = lines[0].strip()
-                    # 제목에 남은 잡티 제거 (step, #, 대괄호)
+                    # 제목에 남은 잡티(step, 대괄호 등) 제거
                     clean_title = re.sub(r'(?i)(step\s*\d*|단계|\[.*?\]|#)', '', raw_title).strip()
+                    
+                    # 제목이 비었으면 기본값 설정
                     if not clean_title: clean_title = f"과정 {i+1}"
 
                     body_lines = lines[1:]
@@ -333,8 +339,6 @@ if st.session_state.analysis_result:
                     st.error("그래프 함수(draw)를 찾을 수 없습니다.")
             except Exception as e:
                 st.info("그래프를 생성하려면 왼쪽에서 단계를 선택하거나, 코드를 확인하세요.")
-                # 디버깅용 (필요시 주석 해제)
-                # st.code(final_code)
 
     except Exception as e:
         st.error("결과 처리 중 오류가 발생했습니다.")
