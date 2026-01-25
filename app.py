@@ -96,7 +96,7 @@ try:
     # [형님, 여기입니다] 3.0 Pro가 안 되면 아래 이름을 수정하세요.
     # 예: 'gemini-2.0-pro-exp' 또는 'gemini-1.5-pro'
     # =================================================================
-    model_name = 'gemini-3.0-pro' 
+    model_name = 'gemini-2.0-pro-exp' 
     
 except Exception:
     st.sidebar.error("⚠️ API 키 설정이 필요합니다.")
