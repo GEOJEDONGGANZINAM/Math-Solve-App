@@ -1,76 +1,93 @@
 import streamlit as st
 import google.generativeai as genai
 from PIL import Image
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 import re
-import traceback
+import time
 
 # ==========================================
-# 1. 디자인 & 스타일 (형님이 원하신 1.png 코드 + 챗지피티 스크롤 고정)
+# 0. 보안 시스템 (Gatekeeper)
 # ==========================================
-st.set_page_config(layout="wide", page_title="최승규 2호기")
+st.set_page_config(layout="wide", page_title="최승규 2호기 - 시크릿 모드")
 
+# 세션 상태 초기화
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+
+# 로그인 화면
+if not st.session_state.authenticated:
+    st.markdown("""
+    <style>
+        .stTextInput > div > div > input { text-align: center; font-size: 20px; }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.title("🔒 1호기 보안 시스템")
+        st.write("승규형님 승인 코드 없이는 접근 불가합니다.")
+        password = st.text_input("Access Code", type="password")
+        
+        if st.button("접속 승인 요청"):
+            if password == "71140859":
+                st.session_state.authenticated = True
+                st.rerun()
+            else:
+                st.error("🚫 접근 거부: 코드가 일치하지 않습니다.")
+    st.stop()
+
+# ==========================================
+# 1. 디자인 & 스타일 (Sticky Text Guide)
+# ==========================================
 st.markdown("""
 <style>
-    /* 폰트 설정 (유지) */
+    /* 폰트 설정 */
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
     * { font-family: 'Pretendard', sans-serif !important; }
     
-    /* 텍스트 스타일 (유지) */
+    /* 텍스트 스타일: 수학 문제집 해설 느낌 */
     .stMarkdown p, .stMarkdown li {
         font-size: 16px !important;
         line-height: 1.8 !important;
-        color: inherit !important;
-        margin-bottom: 1em !important;
+        color: #333333 !important;
+        margin-bottom: 0.8em !important;
     }
     
-    /* 제목 스타일 (유지) */
+    /* 제목 스타일 */
     h1, h2, h3 {
-        font-size: 20px !important; 
         font-weight: 700 !important;
-        color: inherit !important;
-        margin-top: 1.5em !important;
-        margin-bottom: 0.5em !important;
+        color: #000000 !important;
+        margin-top: 1.2em !important;
     }
     
-    /* 수식 폰트 크기 (유지) */
-    .katex { 
-        font-size: 1.2em !important; 
-        line-height: 1.5 !important;
-        color: inherit !important; 
-    }
+    /* 수식 폰트 */
+    .katex { font-size: 1.15em !important; }
     
+    /* 사이드바 스타일 */
     section[data-testid="stSidebar"] { background-color: #00C4B4 !important; }
     section[data-testid="stSidebar"] * { color: #ffffff !important; }
 
     /* ====================================================================
-       [그래프 위치 긴급 수정] 스크롤 따라오기 + 상단 정렬
+       [Sticky 기능] 오른쪽 가이드가 스크롤 따라오게 설정
        ==================================================================== */
-    
-    /* 1. 가로 컨테이너가 자식 높이를 억지로 늘리지 않게 함 (필수) */
-    [data-testid="stHorizontalBlock"] {
-        align-items: flex-start !important;
-    }
+    [data-testid="stHorizontalBlock"] { align-items: flex-start !important; }
 
-    /* 2. Sticky 타겟 설정 (그래프 기둥) */
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(#sticky-anchor),
-    div[data-testid="stVerticalBlock"]:has(#sticky-anchor),
-    div[data-testid="column"]:has(#sticky-anchor),
-    div[data-testid="stColumn"]:has(#sticky-anchor) {
+    /* #sticky-guide 아이디를 가진 박스를 고정 */
+    div[data-testid="column"]:has(#sticky-guide) {
         position: -webkit-sticky !important;
         position: sticky !important;
-        top: 5rem !important; /* 상단 메뉴바 아래에 고정 */
+        top: 5rem !important;
         z-index: 1000 !important;
-        
-        /* [핵심 수정] 기둥 내부의 그래프가 바닥으로 꺼지지 않게 '위로 정렬' 강제 */
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: flex-start !important;
-        
         height: fit-content !important;
-        align-self: flex-start !important; 
+        display: block !important;
+    }
+    
+    /* 가이드 박스 디자인 */
+    .guide-box {
+        background-color: #f8f9fa;
+        border-left: 5px solid #00C4B4;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -83,6 +100,8 @@ if 'analysis_result' not in st.session_state:
 
 try:
     api_key = st.secrets["GOOGLE_API_KEY"]
+    # [설정] 창의성 0.0 -> 기계적인 검증 모드
+    generation_config = {"temperature": 0.0, "top_p": 1, "top_k": 1}
     genai.configure(api_key=api_key)
 except Exception:
     st.sidebar.error("⚠️ API 키 설정이 필요합니다.")
@@ -92,82 +111,64 @@ except Exception:
 # ==========================================
 with st.sidebar:
     st.title("최승규 2호기")
-    st.caption("깨끗한 사진일수록 인식이 잘 됩니다.")
+    st.caption("Ver. Agentic Protocol")
     st.markdown("---")
     uploaded_file = st.file_uploader("문제 사진 업로드", type=["jpg", "png", "jpeg"], key="problem_uploader")
     
     st.markdown("---")
-    if st.button("🔄 새로운 문제 풀기 (Reset)"):
+    if st.button("🔄 초기화"):
         st.session_state.analysis_result = None
         st.rerun()
 
 # ==========================================
-# 4. 메인 로직
+# 4. 메인 로직 (5단계 검증 프로토콜 적용)
 # ==========================================
 if not uploaded_file:
-    st.info("👈 왼쪽 사이드바에서 문제 사진을 업로드하면 **즉시 풀이가 시작**됩니다.")
+    st.info("👈 문제 사진을 업로드하면 **'5단계 검증 프로토콜'**이 시작됩니다.")
     st.stop()
 
 image = Image.open(uploaded_file)
 
 if st.session_state.analysis_result is None:
-    with st.spinner("[부탁말씀] 사이트 운영비가 큽니다. 수강생 전용으로만 부탁합니다. 최승규식 풀이라 수강생이 아닌 경우, 별로 도움이 되지 않을 수도 있습니다. 문제푸는 데 오래 걸릴 수 있으니 다른 문제 풀고 계세요."):
+    with st.spinner("🔄 [Phase 1~4] 분석, 검증, 해결책 도출 중..."):
         try:
-            # [수정됨] 창의성(Temperature) 0.0 설정 -> 결과 완전 고정
-            generation_config = {
-                "temperature": 0.0,  # 0으로 설정하면 무조건 정해진 답만 나옵니다.
-                "top_p": 1,
-                "top_k": 1,
-            }
             model = genai.GenerativeModel('gemini-2.5-flash', generation_config=generation_config)
             
-            # [프롬프트 유지]
+            # [형님이 지시한 5단계 검증 프로토콜 프롬프트]
             prompt = """
-            너는 대한민국 1타 수학 강사야. 이 문제를 학생에게 설명하듯이 **3가지 방식**으로 친절하고 명확하게 풀이해줘.
+            너는 대한민국 최고의 수학 연구소의 '검증된 AI 조교'다. 
+            단순히 답만 내지 말고, 아래의 **[5단계 검증 프로토콜]**을 내부적으로 거친 뒤, 최종 결과물만 출력해라.
 
-            **[텍스트 레이아웃 절대 규칙 - 어기면 오류 처리]**
-            1. **시작**: 서론, 인사말 절대 금지. **무조건 '# Method 1: 정석 풀이'로 시작해.**
-            2. **구조 (제목 정확히 준수)**:
-               - **# Method 1: 정석 풀이**
-               - **# Method 2: 빠른 풀이**
-               - **# Method 3: 직관 풀이**
-            3. **형식**: 
-               - LaTeX($...$) 사용.
-               - **[핵심] 분수는 무조건 `\\dfrac` (Display Fraction) 사용.** (글씨 크게)
-               - 개조식(-), 'Step' 단어 금지.
-            4. **[초강력 줄바꿈 명령 - 가장 중요, 어길 시 오류 처리]**:
-               - **제발 글을 옆으로 길게 이어 쓰지 마.** (가독성 망가진다)
-               - **마침표(.)가 찍히는 순간 무조건 엔터(줄바꿈)를 눌러.**
-               - **한 줄에는 오직 하나의 문장만 있어야 해.** (절대 문장 2개를 이어서 쓰지 마)
-            5. **잘못된 예시 (절대 금지)**:
-               "점 A는 곡선 위에 있습니다. 따라서 대입하면 성립합니다." (X -> 이렇게 붙여 쓰면 탈락!)
-            6. **올바른 예시 (무조건 이렇게, 어길 시 오류 처리)**:
-               ● 점 A는 곡선 위에 있습니다.
-               ● 따라서 대입하면 성립합니다.
+            **[내부 사고 과정 (Internal Protocol)]**
+            1. **Phase 1 (정보 수집)**: 문제의 조건, 그래프 개형, 수식 정보를 빠짐없이 스캔한다.
+            2. **Phase 2 (초안 작성)**: 3가지 방식(정석, 빠른, 직관)으로 풀이 전략을 세운다.
+            3. **Phase 3 (가설 검증)**: 세운 식과 답이 논리적 모순이 없는지 역산하여 확인한다.
+            4. **Phase 4 (해결책 도출)**: 검증된 풀이를 **'수학 문제집 해설지 스타일'**로 정제한다.
+            5. **Phase 5 (유효성 확인)**: 학생이 이 풀이를 보고 이해할 수 있는지 최종 점검한다.
 
-            **[그래프 코드 요청 - 오류 절대 금지]**
-            풀이 맨 마지막에 **반드시** 그래프를 그리는 Python 코드를 작성해.
-            - 코드는 `#CODE_START#` 와 `#CODE_END#` 로 감싸줘.
-            - 함수 이름: `def draw():` (인자 없음)
+            **[최종 출력 형식 (엄수)]**
+            출력은 반드시 **두 부분**으로 나누어야 한다. 두 부분 사이에는 `|||SPLIT|||` 이라는 구분자를 넣어라.
+
+            **[Part 1: 문제 해설]**
+            - **스타일**: 블로그 글처럼 주저리주저리 쓰지 말고, **'수학 문제집 정답과 풀이'** 섹션처럼 깔끔하고 건조하게 작성해.
+            - **구성**:
+              1. **[정석 풀이]**: 논리적 서술 (교과서적 접근)
+              2. **[빠른 풀이]**: 실전 스킬 위주
+              3. **[직관 풀이]**: 그래프/기하적 해석
+            - **가독성**: 
+              - 문단 나눌 때 확실하게 나누고, 중요 수식은 별도 줄에 작성.
+              - 분수는 `\\dfrac` 사용.
             
-            **[Python 코드 작성 시 절대 주의사항 - 어기면 오류 처리]**
-            1. **[ValueError 방지]**: Numpy 배열 확인 시 반드시 `if array.size > 0:` 사용.
-            2. **비율 고정**: `ax.set_aspect('equal')` 필수.
-            3. **크기**: `plt.figure(figsize=(6, 6))`
-            4. **[표시 요소 제한 - 형님 지시사항]**:
-               - **그래프 제목(Title), 축 라벨(x-axis, y-axis) 등 불필요한 영어 텍스트는 절대 쓰지 마.** (깔끔하게)
-               - 오직 **수식($y=...$), 점의 좌표((x,y)), 선분의 길이, x축, y축**만 표시해.
-            5. **[겹침 방지]**: 텍스트가 그래프 선이나 다른 점과 겹치지 않게 `ha`, `va` 및 좌표 오프셋(Offset)을 세밀하게 조정해.
-            6. **글씨 크기**: `fontsize=9` 통일.
-            7. **언어**: 영어(English)만 사용 (한글 깨짐 방지).
-            8. **그래프(함수)**인 경우: 주요 **점의 좌표**와 **그래프 식**, **선분의 길이**만 표시해.
-            9. **도형(기하)**인 경우: **변의 길이**, **각의 크기**, **보조선**만 표시해.
-            10. **[핵심] 여백 완전 제거 (꽉 찬 정사각형 - 어기면 오류 처리)**: 
-                 - **반드시 코드 맨 마지막에 `plt.tight_layout(pad=0)`을 실행해.** (여백을 0으로 설정)
-                 - `ax.set_xlim()`과 `ax.set_ylim()`을 사용해서 데이터가 있는 영역에 딱 맞게 설정해, 그래프가 작게 나오거나 흰 여백이 생기는 것을 막아.
-                 - 텍스트(수식 등)가 그래프 영역 밖으로 나가서 여백을 만들지 않게 안쪽으로 배치해.
+            `|||SPLIT|||`
 
-            자, 바로 # Method 1: 정석 풀이부터 시작해.
+            **[Part 2: 그래프 작도 가이드]**
+            - **역할**: 학생이 연습장에 직접 그래프를 그릴 수 있도록 **말로 설명하는 가이드**다. 코드를 짜지 마.
+            - **말투**: "~하세요.", "~찍으세요." 같은 지시형.
+            - **내용**:
+              1. x축, y축 그리기 범위 설정.
+              2. 주요 함수($y=...$)를 어떻게 그리는지 설명 (증가/감소, 점근선 등).
+              3. 핵심 점(A, B 등)의 대략적 위치 지정.
+              4. 보조선을 어디에 그어야 하는지 지시.
             """
             
             response = model.generate_content([prompt, image])
@@ -175,61 +176,45 @@ if st.session_state.analysis_result is None:
             st.rerun()
             
         except Exception as e:
-            st.error(f"분석 중 오류가 발생했습니다: {e}")
+            st.error(f"프로토콜 실행 중 오류 발생: {e}")
             st.stop()
 
 # ==========================================
-# 5. 결과 화면
+# 5. 결과 화면 (좌: 해설 / 우: Sticky 가이드)
 # ==========================================
 if st.session_state.analysis_result:
     full_text = st.session_state.analysis_result
     
-    text_content = full_text
-    code_content = ""
-    
-    if "#CODE_START#" in full_text:
-        parts = full_text.split("#CODE_START#")
-        text_content = parts[0]
-        
-        if "#CODE_END#" in parts[1]:
-            code_content = parts[1].split("#CODE_END#")[0]
-            if len(parts[1].split("#CODE_END#")) > 1:
-                text_content += parts[1].split("#CODE_END#")[1]
-
-    # 세탁
-    text_content = text_content.replace("`", "")
-    text_content = text_content.replace("arrow_down", "")
-    match = re.search(r'(#+\s*Method\s*1|\*{2}Method\s*1|Method\s*1:)', text_content, re.IGNORECASE)
-    if match:
-        text_content = text_content[match.start():]
+    # 구분자로 텍스트 분리
+    if "|||SPLIT|||" in full_text:
+        parts = full_text.split("|||SPLIT|||")
+        solution_text = parts[0].strip()
+        guide_text = parts[1].strip()
+    else:
+        solution_text = full_text
+        guide_text = "그래프 가이드 생성에 실패했습니다."
 
     # [레이아웃 2:1]
-    col_text, col_graph = st.columns([2, 1])
+    col_text, col_guide = st.columns([2, 1])
     
+    # 왼쪽: 문제 해설
     with col_text:
-        st.markdown(text_content)
+        st.markdown(solution_text)
         
-    with col_graph:
-        # [핵심] Sticky Anchor 심기 (CSS가 이 ID를 찾아서 고정함)
-        st.markdown('<div id="sticky-anchor"></div>', unsafe_allow_html=True)
+    # 오른쪽: Sticky 그래프 가이드
+    with col_guide:
+        # [Sticky Target] CSS가 이 ID를 잡습니다.
+        st.markdown('<div id="sticky-guide"></div>', unsafe_allow_html=True)
         
-        st.markdown("### 📐 최종 시각화")
-        
-        if code_content:
-            try:
-                clean_code = code_content.replace("```python", "").replace("```", "").strip()
-                exec_globals = {"np": np, "plt": plt, "patches": patches}
-                plt.close('all')
-                exec(clean_code, exec_globals)
-                
-                if "draw" in exec_globals:
-                    fig = exec_globals["draw"]()
-                    # 강제 늘림 방지 (정사각형 유지) - 형님 코드 그대로 유지
-                    st.pyplot(fig, use_container_width=False)
-                else:
-                    st.warning("그래프 함수를 찾을 수 없습니다.")
-            except Exception as e:
-                st.error("그래프 생성 중 오류가 발생했습니다.")
-                st.write(e)
-        else:
-            st.info("시각화 코드가 생성되지 않았습니다.")
+        # 가이드 박스 디자인 적용
+        st.markdown(f"""
+        <div class="guide-box">
+            <h3 style="margin-top:0;">📝 그래프 작도 가이드</h3>
+            <p style="font-size:14px; color:#666;">
+                이 가이드를 보고 연습장에 직접 그래프를 그려보세요.<br>
+                직접 그려야 실력이 늡니다.
+            </p>
+            <hr>
+            {guide_text.replace(chr(10), '<br>')}
+        </div>
+        """, unsafe_allow_html=True)
