@@ -140,7 +140,7 @@ if not uploaded_file:
 image = Image.open(uploaded_file)
 
 if st.session_state.analysis_result is None:
-    with st.spinner("🧠 **Gemini 3.0 Pro 가동 중... (1타 강사 빙의)**"):
+    with st.spinner("🧠 ***최승규 2호기* 가 문제를 푸는中**"):
         try:
             # 설정: 창의성 0.0 (기계적 정확함)
             generation_config = {"temperature": 0.0, "top_p": 1, "top_k": 1}
@@ -163,8 +163,9 @@ if st.session_state.analysis_result is None:
             * `### Method 2: [빠른 풀이 공식/스킬]` 
             * `### Method 3: [직관/그래프 해석]`
             * 제목에는 반드시 **핵심 수학 개념**을 포함해.
-              * 예: **### Method 1: 차함수와 인수정리 활용 (정석 & 추천)**
+              * 예: **### Method 1: 차함수와 인수정리 활용**
               * 예: **### Method 2: 비율 관계를 이용한 빠른 풀이**
+              * 예: **### Method 3: 그래프의 대칭성을 이용한 풀이**
 
             **[2. 본문 서술 방식 (Bullet Points)]**
             * 줄글로 길게 늘어쓰지 마. (가독성 떨어짐)
@@ -179,7 +180,7 @@ if st.session_state.analysis_result is None:
             **[3. 수식 표현 (LaTeX Layout)]**
             * 문장 중간의 변수나 간단한 식은 `$ f(x) $` 와 같이 인라인으로 써.
             * **계산 과정, 중요 방정식, 최종 정답은 반드시 `$$ ... $$` (Display Math)를 써서 별도 줄에 중앙 정렬해.** (이게 가독성 핵심)
-            * 분수는 무조건 `\\dfrac`을 사용해서 크게 보여줘.
+            * **[핵심] 분수는 무조건 `\displaystyle \dfrac` 명령어를 사용해서 위아래로 큼직하게 보이게 해.** (절대 찌그러진 `\frac` 쓰지 마)
             * 수식 위아래로 빈 줄을 하나씩 둬서 시원시원하게 보이게 해.
 
             **[4. 내용 검증]**
