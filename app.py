@@ -3,136 +3,159 @@ import google.generativeai as genai
 from PIL import Image
 
 # ==========================================
-# 0. 보안 시스템 (Gatekeeper)
+# 0. 기본 설정 & 보안 시스템
 # ==========================================
-st.set_page_config(layout="centered", page_title="최승규 2호기 - The Original")
+st.set_page_config(layout="centered", page_title="최승규 2호기 - Gemini 3.0 Pro")
 
 # 세션 상태 초기화
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
 
-# 로그인 화면
+# [보안] 로그인 화면
 if not st.session_state.authenticated:
-    st.markdown("<h2 style='text-align: center;'>🔒 접근 승인</h2>", unsafe_allow_html=True)
+    st.markdown("<br><br><h2 style='text-align: center; color: white;'>🔒 접근 승인 요청</h2>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        password = st.text_input("Access Code", type="password", label_visibility="collapsed")
+        password = st.text_input("Access Code", type="password", label_visibility="collapsed", placeholder="비밀번호 입력")
         if st.button("Login", use_container_width=True):
-            if password == "71140859":
+            if password == "71140859": # 비밀번호
                 st.session_state.authenticated = True
                 st.rerun()
             else:
-                st.error("코드가 일치하지 않습니다.")
+                st.error("🚫 접근 거부")
     st.stop()
 
 # ==========================================
-# 1. 디자인 & 스타일 (제미나이 웹 스타일)
+# 1. 디자인 & 스타일 (리얼 순정 블랙 & 올 화이트)
 # ==========================================
 st.markdown("""
 <style>
-    /* 폰트 설정 */
+    /* 폰트: 프리텐다드 */
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
     * { font-family: 'Pretendard', sans-serif !important; }
     
-    /* 전체 배경 및 텍스트 설정 (다크 모드 대응 및 가독성 최적화) */
+    /* [배경] 리얼 블랙 */
     .stApp {
-        background-color: #0e1117; /* 짙은 배경 (눈 편안함) */
-        color: #e0e0e0; /* 밝은 회색 텍스트 */
+        background-color: #131314 !important;
+        color: #ffffff !important;
     }
     
-    /* 제목 스타일 */
-    h1, h2, h3 {
+    /* 제목 (완전 흰색) */
+    h1, h2, h3, h4 {
         color: #ffffff !important;
         font-weight: 700 !important;
-        margin-top: 1.5em !important;
-        margin-bottom: 0.8em !important;
+        margin-bottom: 0.5em !important;
     }
     
-    /* 본문 텍스트 */
+    /* 본문 텍스트 (완전 흰색) */
     .stMarkdown p, .stMarkdown li {
-        font-size: 17px !important;
-        line-height: 1.8 !important;
-        color: #e0e0e0 !important;
+        font-size: 16px !important;
+        line-height: 1.7 !important;
+        color: #ffffff !important;
     }
     
-    /* 수식 스타일 (LaTeX) - 선명하게 */
+    /* [수정 완료] 수식(LaTeX) 색상 -> 무조건 흰색 (#ffffff) */
     .katex {
-        font-size: 1.2em !important;
-        color: #a5d6ff !important; /* 수식은 살짝 푸른빛 돌게 강조 */
+        font-size: 1.15em !important;
+        color: #ffffff !important; 
     }
     
-    /* 강조 박스 등 제거하고 순수 텍스트 위주로 감 */
+    /* 사이드바 (민트색 유지) */
     section[data-testid="stSidebar"] { background-color: #00C4B4 !important; }
     section[data-testid="stSidebar"] * { color: #ffffff !important; }
+    
+    /* 버튼 스타일 */
+    div.stButton > button {
+        background-color: #333333;
+        color: white;
+        border: 1px solid #555555;
+    }
+    
+    /* 입력창 스타일 */
+    .stTextInput > div > div > input {
+        color: white;
+        background-color: #333333;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. 초기화 및 설정
+# 2. API 및 모델 설정 (Gemini 3.0 Pro 강제)
 # ==========================================
 if 'analysis_result' not in st.session_state:
     st.session_state.analysis_result = None
 
 try:
     api_key = st.secrets["GOOGLE_API_KEY"]
-    # [설정] 창의성 0.0 (기계적인 정확함 추구)
+    
+    # [설정] 창의성 0.0 (기계적인 정확도)
     generation_config = {"temperature": 0.0, "top_p": 1, "top_k": 1}
     genai.configure(api_key=api_key)
+    
+    # =================================================================
+    # [형님, 여기입니다] 3.0 Pro가 안 되면 아래 이름을 수정하세요.
+    # 예: 'gemini-2.0-pro-exp' 또는 'gemini-1.5-pro'
+    # =================================================================
+    model_name = 'gemini-3.0-pro' 
+    
 except Exception:
     st.sidebar.error("⚠️ API 키 설정이 필요합니다.")
 
 # ==========================================
-# 3. 사이드바
+# 3. 사이드바 (입력)
 # ==========================================
 with st.sidebar:
     st.title("최승규 2호기")
-    st.caption("Pure Math Logic")
+    st.caption(f"Engine: {model_name}") # 현재 엔진 이름 표시
     st.markdown("---")
     uploaded_file = st.file_uploader("문제 업로드", type=["jpg", "png", "jpeg"], key="problem_uploader")
     
     st.markdown("---")
-    if st.button("🔄 초기화"):
+    if st.button("🔄 초기화 (Reset)"):
         st.session_state.analysis_result = None
         st.rerun()
 
 # ==========================================
-# 4. 메인 로직
+# 4. 메인 로직 (AI 1타 강사 빙의)
 # ==========================================
 if not uploaded_file:
-    st.info("👈 문제를 업로드하면 **최적의 풀이**를 시작합니다.")
+    st.info(f"👈 문제 사진을 올려주세요. **{model_name}** 모델이 대기 중입니다.")
     st.stop()
 
 image = Image.open(uploaded_file)
 
 if st.session_state.analysis_result is None:
-    with st.spinner("🧠 1타 강사 빙의 중... (잠시만 기다려주세요)"):
+    with st.spinner(f"🧠 **{model_name} 가동 중...**"):
         try:
-            model = genai.GenerativeModel('gemini-2.5-flash', generation_config=generation_config)
+            # 모델 로딩
+            model = genai.GenerativeModel(model_name, generation_config=generation_config)
             
-            # [프롬프트] 형님이 캡처해주신 그 스타일 그대로 나오게 하는 주문
+            # [프롬프트] 형님이 원하신 그 '원본' 퀄리티
             prompt = """
-            너는 대한민국 최고의 수능 수학 강사야.
-            주어진 문제를 학생이 완벽하게 이해할 수 있도록 **논리적이고 체계적**으로 풀어줘.
+            너는 대한민국 수능 수학 1타 강사야. 
+            주어진 문제를 **사진 속 예시처럼** 아주 구체적이고 전문적인 용어를 사용해서 풀어줘.
             
-            **[작성 스타일 가이드 - 캡처된 화면처럼]**
-            1. **구조**: 
-               - **Method 1: 정석 풀이** (교과서적 개념 활용)
-               - **Method 2: 빠른 풀이** (실전 공식 및 스킬 활용)
-               - **Method 3: 직관 풀이** (그래프 개형 및 기하적 해석)
-            
-            2. **서술 방식**:
-               - **Step 1, Step 2, Step 3**와 같이 단계별로 명확히 나누어 서술해.
-               - 줄글로 길게 쓰지 말고, **핵심 수식** 위주로 전개해.
-               - "~입니다." 보다는 간결하고 명확한 문체 사용.
-            
-            3. **수식 (LaTeX)**:
-               - 모든 수식은 LaTeX 포맷($...$)을 사용해.
-               - **중요한 수식은 반드시 별도 줄(Display Math Mode, `$$...$$`)에 작성해서 중앙 정렬되게 해.** (가독성 핵심)
+            **[작성 원칙 - 리얼 제미나이 스타일 완벽 재현]**
+
+            1. **제목 포맷 (핵심 개념 명시 - 가장 중요)**:
+               - 단순 '풀이'라고 쓰지 마. 아래 예시처럼 [핵심 개념]을 제목에 박아넣어.
+               - 예시:
+                 **Method 1: 차함수와 인수정리 활용 (정석 & 추천)**
+                 **Method 2: 극대·극소의 차 공식 활용 (빠른 풀이)**
+                 **Method 3: 그래프 평행이동을 통한 단순화 (센스 풀이)**
+
+            2. **수식 표현 (가독성)**:
+               - 문장 중간에 들어가는 수식은 $...$ 사용.
+               - **[필수] 핵심 계산 식이나 결과는 반드시 `$$ ... $$` (Display Math)를 사용하여 중앙에 크게 배치해.**
                - 분수는 `\\dfrac` 사용.
 
+            3. **서술 방식**:
+               - **Step 1: 조건 해석**, **Step 2: 식 세우기**, **Step 3: 결론 도출** 구조를 지켜.
+               - 문장은 명사형(~함, ~임) 또는 간결한 문장으로 끝내. (구구절절 설명 금지)
+
             4. **내용**:
-               - 그래프 가이드 같은 건 따로 만들지 마.
-               - 오직 **문제 풀이의 논리**에만 집중해. 형님이 보내준 캡처 화면처럼 **수식과 논리**로 압도해.
+               - 오직 문제 풀이 텍스트만 출력해. (그래프 코드 작성 금지, 가이드 작성 금지)
+               - 사진에서 본 것처럼 논리적 비약 없이 꽉 찬 해설을 보여줘.
             """
             
             response = model.generate_content([prompt, image])
@@ -140,12 +163,13 @@ if st.session_state.analysis_result is None:
             st.rerun()
             
         except Exception as e:
-            st.error(f"오류: {e}")
+            st.error(f"⚠️ **오류 발생**: {e}")
+            st.warning(f"'{model_name}' 모델을 사용할 수 없습니다. 코드의 'model_name' 변수를 'gemini-1.5-pro' 등으로 변경해주세요.")
             st.stop()
 
 # ==========================================
-# 5. 결과 화면 (One Column)
+# 5. 결과 화면 (통으로 보여주기)
 # ==========================================
 if st.session_state.analysis_result:
-    # 레이아웃 나누지 않음. 통으로 보여줌.
+    # 레이아웃 나누지 않고 통으로 출력
     st.markdown(st.session_state.analysis_result)
