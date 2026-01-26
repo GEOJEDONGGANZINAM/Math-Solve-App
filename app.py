@@ -15,15 +15,15 @@ USER_DB = {
     "seungkyu": "71140859",     # 형님 (관리자)
     "junhee": "8135",          # <--- [여기] 사모님 아이디 (바꾸세요)
     "student1": "1234" 
-    "student1": "1234" 
-    "student1": "1234" 
-    "student1": "1234" 
-    "student1": "1234" 
-    "student1": "1234" 
-    "student1": "1234" 
-    "student1": "1234" 
-    "student1": "1234" 
-    "student1": "1234" 
+    "student2": "1234" 
+    "student3": "1234" 
+    "student4": "1234" 
+    "student5": "1234" 
+    "student6": "1234" 
+    "student7": "1234" 
+    "student8": "1234" 
+    "student9": "1234" 
+    "student10": "1234" 
 }
 
 # 세션 상태 초기화
