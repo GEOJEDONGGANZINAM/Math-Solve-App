@@ -134,7 +134,7 @@ except Exception as e:
 with st.sidebar:
     st.title("최승규 2호기")
     st.caption("최승규T 스타일 문제풀이 사이트")
-    st.caption("이해되지 않는 부분은 최승규T 에게 오세요")
+    st.caption("이해되지 않는 부분은 최승규T에게 오세요")
     st.caption("질문 1회당 비용이 듭니다. 필요한 것만, 알차게 씁시다")
     st.markdown("---")
     
