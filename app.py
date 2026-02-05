@@ -14,10 +14,10 @@ st.set_page_config(layout="centered", page_title="최승규 2호기")
 USER_DB = {
     "seungkyu": "71140859",     # 형님 (관리자)
     "junhee": "8135",          # <--- [여기] 사모님 아이디 (바꾸세요)
-    "student": "1234", 
+    "student": "12345", 
     "seungyun": "2512", 
     "seunghyun": "0450", 
-    "student4": "1234", 
+    "chanmin": "0822", 
     "student5": "1234", 
     "student6": "1234", 
     "student7": "1234", 
