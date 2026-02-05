@@ -16,7 +16,7 @@ USER_DB = {
     "junhee": "8135",          # <--- [여기] 사모님 아이디 (바꾸세요)
     "student": "1234", 
     "seungyun": "2512", 
-    "student3": "1234", 
+    "seunghyun": "0450", 
     "student4": "1234", 
     "student5": "1234", 
     "student6": "1234", 
