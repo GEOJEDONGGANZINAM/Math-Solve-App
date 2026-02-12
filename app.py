@@ -12,7 +12,7 @@ st.set_page_config(layout="centered", page_title="최승규 2호기")
 # [명단 관리]
 # 사모님 아이디는 특별하게 관리합니다.
 USER_DB = {
-    "seungkyu": "71140859",     # 형님 (관리자)
+    "seungkyu": "951026",     # 형님 (관리자)
     "junhee": "8135",          # <--- [여기] 사모님 아이디 (바꾸세요)
     "student": "1234567", 
     "seungyun": "2512", 
@@ -32,9 +32,12 @@ USER_DB = {
     "mibunganueng": "7658", 
     "yena": "5000", 
     "nayoung": "2162", 
-    "student4": "1234", 
+    "mystory0010": "5463", 
     "student5": "1234", 
     "student6": "1234", 
+    "student1": "1234", 
+    "student2": "1234", 
+    "student3": "1234", 
 }
 
 # 세션 상태 초기화
