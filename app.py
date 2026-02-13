@@ -33,11 +33,17 @@ USER_DB = {
     "yena": "5000", 
     "nayoung": "2162", 
     "mystory0010": "5463", 
-    "student5": "1234", 
-    "student6": "1234", 
+    "chaeyeon": "8326", 
+    "jaeseong": "5334", 
     "student1": "1234", 
     "student2": "1234", 
     "student3": "1234", 
+    "student5": "1234", 
+    "student6": "1234", 
+    "student5": "1234", 
+    "student6": "1234", 
+    "student5": "1234", 
+    "student6": "1234", 
 }
 
 # 세션 상태 초기화
