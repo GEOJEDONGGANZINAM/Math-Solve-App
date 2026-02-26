@@ -76,7 +76,7 @@ USER_DB = {
     "yekang": "7979", 
     "jueun": "6167", 
     "hwayeon": "1810", 
-    "seoeun": "5783", 
+    "shinseoeun": "5783", 
     "Jinah": "2650", 
     "seoyoon": "7583", 
     "yunho": "2748", 
