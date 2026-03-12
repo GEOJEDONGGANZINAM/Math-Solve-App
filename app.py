@@ -45,7 +45,7 @@ USER_DB = {
     "juyoung": "1275", 
     "sanghyeon": "3272", 
     "hyunsuk": "3505", 
-    "yunji": "4079", 
+    "kongyunji": "4079", 
     "juhyeong": "3913", 
     "seonyeong": "7499", 
     "haheun": "4665", 
