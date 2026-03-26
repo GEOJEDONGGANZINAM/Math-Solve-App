@@ -88,7 +88,7 @@ USER_DB = {
     "seoyun": "5430", 
     "yejin": "5906", 
     "junwoo": "2633", 
-    "sihyeon": "9814", 
+    "yoosihyeon": "9814", 
     "goseongmun": "3636", 
     "jeseo": "1401", 
     "seoeun": "1804", 
