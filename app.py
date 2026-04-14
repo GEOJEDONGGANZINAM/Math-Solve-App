@@ -23,7 +23,7 @@ USER_DB = {
     "chanwoo": "6763", 
     "donghan": "0977", 
     "minju": "6566", 
-    "juyeon": "9396", 
+    "leejuyeon": "9396", 
     "wonjun": "2464", 
     "yeongmin": "2083", 
     "siyoun": "2965", 
