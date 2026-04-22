@@ -176,7 +176,7 @@ USER_DB = {
     "haram": "5210", 
     "dawon": "1759", 
     "sangwoo": "1331", 
-    "student6": "1234", 
+    "baeseojin": "9938", 
     "student5": "1234", 
     "student6": "1234", 
     "student5": "1234", 
