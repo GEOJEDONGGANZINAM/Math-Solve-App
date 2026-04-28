@@ -182,7 +182,7 @@ USER_DB = {
     "geonjoo": "7522", 
     "eunje": "2046", 
     "jiwoo": "7021", 
-    "student5": "1234", 
+    "jeongjae": "5271", 
     "student6": "1234", 
     "student5": "1234", 
     "student5": "1234", 
