@@ -96,7 +96,7 @@ USER_DB = {
     "sanghyuk": "2129", 
     "yeonsu": "5372", 
     "boeun": "2615", 
-    "suyeon": "7697", 
+    "yeomsuyeon": "7697", 
     "eunji": "1822", 
     "yoonwoo": "3862", 
     "sooyoung": "7536", 
