@@ -191,7 +191,7 @@ USER_DB = {
     "soyeon": "3840", 
     "seoyeon": "5692", 
     "soehu": "6074", 
-    "student5": "1234", 
+    "minji": "3476", 
     "student6": "1234", 
     "student5": "1234", 
     "student6": "1234", 
