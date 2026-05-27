@@ -320,10 +320,7 @@ try:
     # 우선순위 1: 3.0 Pro Preview (현재 사용 가능)
     # 우선순위 2: 3.0 Pro (미래에 출시될 정식 버전)
     for m in all_models:
-        if 'gemini-3-pro-preview' in m: # 3-pro-preview
-            target_model = m
-            break
-        if 'gemini-3.0-pro' in m: # 3.0-pro
+        if 'gemini-3.1-pro' in m: 
             target_model = m
             break
             
