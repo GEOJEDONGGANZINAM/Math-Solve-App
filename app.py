@@ -343,9 +343,9 @@ except Exception as e:
 # ==========================================
 with st.sidebar:
     st.title("최승규 2호기")
-    st.caption("최승규T 스타일 문제풀이 사이트")
     st.caption("2학기 수업 또한 최신의 양질의 자료들 사용 예정입니다")
-    st.caption("질문 1회당 비용이 듭니다. 필요한 것만, 알차게 씁시다")
+    st.caption("우리동네, 옆동네 자료들 많이 있어요")
+    st.caption("수업 들으러 오셔서 자료 많이 가져가시고 별점 5점 부탁합니다")
     st.markdown("---")
     
     if not target_model:
