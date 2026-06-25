@@ -211,7 +211,7 @@ USER_DB = {
     "dongwon": "4685", 
     "seungyeon": "7417", 
     "dongwon": "4685", 
-    "seongbum: "5082", 
+    "seongbum": "5082", 
     "seongbin": "0209", 
     "geonwoo": "4107", 
     "seonghyeon": "2431", 
